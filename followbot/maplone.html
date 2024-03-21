@@ -2,6 +2,7 @@
 	<head>
 		<meta charset="utf-8"/>
 		<meta name="robots" content="noindex, follow"/>
+		<meta name="viewport" content="width=device-width, initial-scale=4.0, user-scalable=no">
 		<title>OruxPalsServer Big Callsign Follow</title>
 		<link rel="stylesheet" href="leaflet/leaflet.css" />		
 		<!--[if lte IE 8]>
@@ -16,14 +17,14 @@
 		<link rel="stylesheet" href="leaflet/leaflet.label.css" />
 		<script src="leaflet/leaflet.label.js"></script>	
 		<style>
-		.aprs-usericon64
+		.aprs-usericon128
 		{
 			display: block;
 			position:absolute;
-			left:-20px;
-			top:-32px;
-			width:64px;
-			height:64px;
+			left:-64px;
+			top:-64px;
+			width:128px;
+			height:128px;
 		}
 		</style>		
 	</head>
@@ -290,8 +291,8 @@
 									
 			var ldt = (new Date()).getTime() - age * 1000;
 			
-			var lblTxt = '<b>' + user + (registered ? ' &reg;' : '') + '</b><br/>' + speed + ' км/ч на ' + HeadingToTextRus(heading) + '<br/><span id="X_'+user+'_TS">' + calcAge(ldt) + ' назад</span>';			
-			var lblTxt2 = '<b>' + user + (registered ? ' &reg;' : '') + '</b><br/>' + speed + ' км/ч на ' + HeadingToTextRus(heading) + '<br/><span id="X_'+user+'_TS2">' + calcAge(ldt) + ' назад</span>';			
+			var lblTxt  = '<b>' + user + '</b><br/><span style="font-size:10px;>' + speed + ' км/ч на ' + HeadingToTextRus(heading) + '<br/><span id="X_'+user+'_TS">' + calcAge(ldt) + ' назад</span></span>';			
+			var lblTxt2 = '<b>' + user + '</b><br/>' + speed + ' км/ч на ' + HeadingToTextRus(heading) + '<br/><span id="X_'+user+'_TS2">' + calcAge(ldt) + ' назад</span>';			
 						
 			for(i=0;i<marker_cache.length;i++) marker_cache[i].marker.closePopup();
 			for(i=0;i<marker_cache.length;i++)
@@ -313,7 +314,7 @@
 					};					
 					if(mc.symbol != symbol)
 					{
-						$("#usericon"+mc.id)[0].outerHTML = '<div id="usericon'+mc.id+'" class="aprs-usericon64" style="'+symbolToImage(symbol)+';font-weight:bold;color:white;text-align:center;padding: 3px 1px 3px 1px;">&nbsp;</div>';
+						$("#usericon"+mc.id)[0].outerHTML = '<div id="usericon'+mc.id+'" style="display:block;position:absolute;left:-64px;top:-64px;'+symbolToImage(symbol)[0]+';font-weight:bold;color:white;text-align:center;padding: 3px 1px 3px 1px;width:128px;height:128px;">&nbsp;</div>';
 					};
 					if(mc.heading != heading) $("#img"+id).rotate(heading);
 					mc.symbol = symbol; mc.heading = heading; mc.speed = speed; mc.dt = dt;
@@ -343,11 +344,11 @@
 			mc.llarray = [[lat,lon]];
 			mc.line = null;
 			mc.icon = new L.DivIcon({className: 'aprs-clear',html: 
-				'<div id="usericon'+id+'" class="aprs-usericon" style="'+symbolImage+';font-weight:bold;color:white;text-align:center;padding: 3px 1px 3px 1px;"><img id="img'+id+'" src="images/arrow.png" class="aprs-hdg"/>&nbsp;'+symba[1]+'&nbsp;</div>'
+				'<div id="usericon'+id+'" style="display:block;position:absolute;left:-64px;top:-64px;'+symbolImage+';font-weight:bold;color:white;text-align:center;padding: 3px 1px 3px 1px;width:128px;height:128px;"><img id="img'+id+'" style="position:absolute;" src="images/arrow128.png" class="aprs-hdg"/>&nbsp;'+symba[1]+'&nbsp;<br/></div>'
 			});
 			mc.marker = new L.Marker([lat,lon], {icon: mc.icon});			
 			mc.marker.bindPopup(txt);
-			mc.marker.bindLabel('<span id="X_'+user+'">' + lblTxt + '<span>', { direction: 'right', noHide:true });
+			mc.marker.bindLabel('<span id="X_'+user+'" style="font-size:18px;">' + lblTxt + '<span>', { direction: 'right', noHide:true });
 			mc.marker.addTo(map);	
 			$("#img"+id).rotate(mc.heading);
 			if(marker_cache.length == 0) map.setView([lat,lon],15);
@@ -355,16 +356,16 @@
 		}
 		
 		var symbolToImage = function(symb)
-		{
-			var prose = 'primary';
+		{		
+			var prose = 'primary128';
 			var label = '';
 			if(symb.length == 2)
 			{
 				if(symb[0] == '\\') 
-					prose = 'secondary';
+					prose = 'secondary128';
 				else if ((symb[0] != '/') && (("#&0>AW^_acnsuvz").indexOf(symb[1]) >= 0))
                 {
-                    prose = "secondary";
+                    prose = "secondary128";
                     label = symb[0].toString();
 					if (("#0A^cv").indexOf(symb[1]) >= 0) 
 						{ label = "<span style=\"color:black;\">" + label + "</span>"; };
@@ -372,11 +373,12 @@
 				symb = symb.substr(1);
 			};
 			var symbtable = '!"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~';						
-			var idd = symbtable.indexOf(symb);
+			var idd = symbtable.indexOf(symb);			
 			if(idd < 0) idd = 14;
-			var itop =  Math.floor(idd / 16) * 24;
-			var ileft = (idd % 16) * 24;
-			return ['background:url(images/'+prose+'.png) -'+ileft+'px -'+itop+'px no-repeat;', label];
+			var itop =  Math.floor(idd / 16) * 128;
+			var ileft = (idd % 16) * 128;
+			let res = 'background:url(images/'+prose+'.png) -'+ileft+'px -'+itop+'px no-repeat;';
+			return [res, label];
 		}
 		
 		var HeadingToText = function(hdg)
