@@ -248,8 +248,9 @@
 		{
 			if (age > 600000) return; // 1 week
 		
-			if(marker_cache.length == 0)
-				map.setView([lat,lon]);
+			if(marker_cache.length == 0) map.setView([lat,lon],15);
+			
+			if((hashusr != "") && ((!hashusr.startsWith('*')) && (hashusr != user))) return;
 				
 			var sip = symbolToImage(symbol);
 			var sipx = '<div style="display:inline-block;overflow:hidden;height:24px;width:24px;font-weight:bold;color:white;text-align:center;padding:3px 1px 1px 1px;font-size:14px;' + sip[0] + '">&nbsp;' + sip[1] + '&nbsp;</div>';	
@@ -273,9 +274,10 @@
 			txt += 'view on ' + source + '</br>';
 			txt += 'where is on <a href="'+iu1.replaceAll("{lon}", lon).replaceAll("{lat}", lat).replaceAll("{num}", '1').replaceAll("{zoom}", "13")+'" target="_blank">yandex</a></br>';
 			txt += 'where is on <a href="'+iu2.replaceAll("{lon}", lon).replaceAll("{lat}", lat).replaceAll("{num}", '1').replaceAll("{zoom}", "13")+'" target="_blank">2GIS</a></br>';
+			txt += '<hr/><span style="font-size:14px;">follow <a href="map.html?rnd='+Math.random()+'#'+user+'">24</a> | <a href="map64.html?rnd='+Math.random()+'#'+user+'">64</a> | <a href="maplone.html?rnd='+Math.random()+'#'+user+'">128</a> | <a href="?rnd='+Math.random()+'#*'+user+'">др</a></span></br>';
 			txt += '</td></tr>';
-			txt += '</div>';			
-						
+			txt += '</div>';	
+
 			for(i=0;i<marker_cache.length;i++) marker_cache[i].marker.closePopup();
 			for(i=0;i<marker_cache.length;i++)
 			{	
@@ -332,7 +334,7 @@
 			txt = '<table style="width:260px;height:24px;font-size:16px;" celpadding="0" cellspacing="0"><tr><td><b>'+user+'</b> <sup><a href="/oruxpals/i/'+user+'" target="_blank" style="color:black;"></a></sup> '+(registered ? "&reg;" : "")+'</td><td align="right" style="text-align:right;">'+sipx+'</td></tr></table><hr style="font-size:0px;height:1px;border-top:solid 1px gray;"/><div style="width:260px;">' + txt;
 			var mc = {"user":user,"lat":lat,"lon":lon,"heading":heading,"speed":speed,"dt":dt,"id":id,"age":age,"symbol":symbol,"txt":txt};
 			mc.color = colors[id % 10];
-			mc.follow = false;
+			mc.follow = hashusr == '' ? false : hashusr.replaceAll('*','') == user;
 			mc.llarray = [[lat,lon]];
 			mc.line = null;
 			mc.icon = new L.DivIcon({className: 'aprs-clear',html: 
@@ -411,7 +413,7 @@
 		{
 			var html = 'Locate user: <input type="text" style="border:solid 1px gray;" id="Locate" onkeyup="onLocate(event)" value="'+hashusr+'"></input><small> or <a href="#" onclick="onFollow(event)">follow</a> or <a href="#" onclick="onReset(event)">reset</a></small><br/>';
 			html += 'On Map: ' + marker_cache.length+', Clear: <a href="#" onclick="ClearPaths();return false;" title="Clear Paths">paths</a>, <a href="#" onclick="ClearMap();return false;" title="Clear All">all</a> or <a href="#" onclick="ClearStatic();return false;" title="Clear Static">static objects</a><br/>';		
-			html += '<a href="#" onclick="UpdateBuddies();return false;">Update data</a> | <a href="maplone.html">BIG MAP</a><br/>';
+			html += '<a href="#" onclick="UpdateBuddies();return false;">Update data</a> | <a href="map.html">MAP24</a>  | <a href="map64.html">MAP64</a> | <a href="maplone.html">MAP128</a><br/>';
 			document.getElementById('caption').innerHTML = html;
 			
 			var ulist = '';
@@ -438,7 +440,7 @@
 		
 		var onFollow = function(e)
 		{
-			hashusr =  document.getElementById('Locate').value.toString().toUpperCase();
+			hashusr =  document.getElementById('Locate').value.toString().toUpperCase().trim();
 			Follow();
 		}
 		
@@ -576,7 +578,7 @@
 			if(hashusr != "")
 			{				
 				for(i=0;i<marker_cache.length;i++) 
-					if(marker_cache[i].user == hashusr)					
+					if(marker_cache[i].user == hashusr.replaceAll('*',''))
 						map.setView([marker_cache[i].lat,marker_cache[i].lon]);
 			};				
 		};
