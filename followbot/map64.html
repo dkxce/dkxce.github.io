@@ -314,7 +314,7 @@
 						$("#usericon"+mc.id)[0].outerHTML = '<div id="usericon'+mc.id+'" style="display:block;position:absolute;left:-32px;top:-32px;width:64px;height:64px;'+si[0]+';font-weight:bold;color:white;text-align:center;padding: 3px 1px 3px 1px;">&nbsp;'+si[1]+'&nbsp;</div>';
 					};
 					if(mc.heading != heading)
-						$("#img"+id).rotate(heading);
+						$("#img"+id).rotate(Number(heading));
 					mc.symbol = symbol; mc.heading = heading; mc.speed = speed; mc.dt = dt;
 					mc.marker.bindPopup(txt); // update popup text					
 					//map.removeLayer(mc.marker);
@@ -354,7 +354,7 @@
 			mc.marker.bindPopup(txt);
 			mc.marker.bindLabel(typeof caption !== 'undefined' ? caption : lblTxt, { direction: 'right', noHide:true });
 			mc.marker.addTo(map);	
-			$("#img"+id).rotate(mc.heading);
+			$("#img"+id).rotate(Number(mc.heading));
 			// update border color
 			var ci = Math.round(mc.age / 15);
 			if(ci > 255) ci = 255;
