@@ -413,7 +413,7 @@
 		{
 			var html = 'Locate user: <input type="text" style="border:solid 1px gray;" id="Locate" onkeyup="onLocate(event)" value="'+hashusr+'"></input><small> or <a href="#" onclick="onFollow(event)">follow</a> or <a href="#" onclick="onReset(event)">reset</a></small><br/>';
 			html += 'On Map: ' + marker_cache.length+', Clear: <a href="#" onclick="ClearPaths();return false;" title="Clear Paths">paths</a>, <a href="#" onclick="ClearMap();return false;" title="Clear All">all</a> or <a href="#" onclick="ClearStatic();return false;" title="Clear Static">static objects</a><br/>';		
-			html += '<a href="#" onclick="UpdateBuddies();return false;">Update data</a> | <a href="map.html">MAP24</a>  | <a href="map64.html">MAP64</a> | <a href="maplone.html">MAP128</a><br/>';
+			html += '<a href="#" onclick="UpdateBuddies();return false;">Update data</a> | <a href="map.html">MAP24</a>  | <a href="map64.html">MAP64</a> | <a href="maplone.html">MAP128</a> | <a href="demo.html">DEMO</a><br/>';
 			document.getElementById('caption').innerHTML = html;
 			
 			var ulist = '';
@@ -494,6 +494,17 @@
 			UpdateStatus();
 		};		
 		
+		var sec_format = function (s) 
+		{
+			  var fm = [
+					Math.floor(s / 60 / 60 / 24), // DAYS
+					Math.floor(s / 60 / 60) % 24, // HOURS
+					Math.floor(s / 60) % 60, // MINUTES
+					s % 60 // SECONDS
+			  ];
+			  return $.map(fm, function(v, i) { return ((v < 10) ? '0' : '') + v; }).join(':').replace(":",".");
+		};
+		
 		var UpdateBuddies = function()
 		{
 			// Readraw old
@@ -529,7 +540,7 @@
 								let comment = fobj.device + ' '+ fobj.gpsaccuracy + ' ' + fobj.gpslbs + ' ' + fobj.gsmlevel;
 								let source = '<a href="https://livegpstracks.com/dv_' + uinfo.Url + '.html" target="_blank">livegpstracks.com</a>';
 								let age = Math.floor((Date.now() - dt.getTime())/1000);
-								let status = 'Было: ' + age + ' секунд назад';
+								let status = 'Было ' + sec_format(age) + ' назад';
 								
 								let geoquery = geourl.replaceAll("{lat}", fobj.lat).replaceAll("{lon}", fobj.lng);
 								$.get(geoquery, function(gres) {

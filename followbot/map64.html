@@ -553,7 +553,20 @@
 			};
 			marker_cache = tmpa;
 			UpdateStatus();
-		};		
+		};	
+
+		
+
+		var sec_format = function (s) 
+		{
+			  var fm = [
+					Math.floor(s / 60 / 60 / 24), // DAYS
+					Math.floor(s / 60 / 60) % 24, // HOURS
+					Math.floor(s / 60) % 60, // MINUTES
+					s % 60 // SECONDS
+			  ];
+			  return $.map(fm, function(v, i) { return ((v < 10) ? '0' : '') + v; }).join(':').replace(":",".");
+		};
 		
 		var UpdateBuddies = function()
 		{
@@ -590,7 +603,7 @@
 								let comment = fobj.device + ' '+ fobj.gpsaccuracy + ' ' + fobj.gpslbs + ' ' + fobj.gsmlevel;
 								let source = '<a href="https://livegpstracks.com/dv_' + uinfo.Url + '.html" target="_blank">livegpstracks.com</a>';
 								let age = Math.floor((Date.now() - dt.getTime())/1000);
-								let status = 'Было: ' + age + ' секунд назад';
+								let status = 'Было ' + sec_format(age) + ' назад';
 								
 								let geoquery = geourl.replaceAll("{lat}", fobj.lat).replaceAll("{lon}", fobj.lng);
 								$.get(geoquery, function(gres) {

@@ -1,13 +1,13 @@
 {
 	"Followers":
 	[
-		{ "ID": "63515901450646248517251", "Name": "APTEM",     "Url": "31115925493663165317887", "Show": true,  "Symbol": "\\k"},
-		{ "ID": "74915975838321868801228", "Name": "47RUZA",    "Url": "67415975838504902429266", "Show": true,  "Symbol": "/<"},
-		{ "ID": "39616814835269360468340", "Name": "RTT_APTEM", "Url": "67716814835872153167687", "Show": true,  "Symbol": "/s"},
-		{ "ID": "86456123453142658763587", "Name": "DEMO",      "Url": "@",                       "Show": false, "Symbol": "/*"},
-		{ "ID": "92415901456521569128103", "Name": "ANN",       "Url": "",                        "Show": false, "Symbol": "/["},
-		{ "ID": "66515901456969664336914", "Name": "RINAT",     "Url": "",                        "Show": false, "Symbol": "/="},
-		{ "ID": "49215901457632199196376", "Name": "MARVAS",    "Url": "",                        "Show": false, "Symbol": "\\j"},
-		{ "ID": "82215901460049970416697", "Name": "ROBERT",    "Url": "",                        "Show": false, "Symbol": "/b"}
+		{ "ID": "63515901450646248517251", "Name": "APTEM",     "Url": "31115925493663165317887", "Show": true,  "Symbol": "\\k", "Account": "d..e"},
+		{ "ID": "74915975838321868801228", "Name": "47RUZA",    "Url": "67415975838504902429266", "Show": true,  "Symbol": "/<",  "Account": "m..z"},
+		{ "ID": "39616814835269360468340", "Name": "RTT_APTEM", "Url": "67716814835872153167687", "Show": true,  "Symbol": "/s",  "Account": "u..b"},
+		{ "ID": "86456123453142658763587", "Name": "DEMO",      "Url": "@",                       "Show": false, "Symbol": "/*",  "Account": null},
+		{ "ID": "92415901456521569128103", "Name": "ANN",       "Url": "",                        "Show": false, "Symbol": "/[",  "Account": "d..e"},
+		{ "ID": "66515901456969664336914", "Name": "RINAT",     "Url": "",                        "Show": false, "Symbol": "/=",  "Account": "d..e"},
+		{ "ID": "49215901457632199196376", "Name": "MARVAS",    "Url": "",                        "Show": false, "Symbol": "\\j", "Account": "d..e"},
+		{ "ID": "82215901460049970416697", "Name": "ROBERT",    "Url": "",                        "Show": false, "Symbol": "/b",  "Account": "m..z"}
 	]
 }
