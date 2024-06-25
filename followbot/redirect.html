@@ -1,24 +1,38 @@
 <html>
+
+	<!--
+	DESCRIPTION:
+		Redirect TMA (Telegram Mini App) to LiveGPSTracks Monitoring APTracker.
+		Help: https://core.telegram.org/bots/webapps#direct-link-mini-apps
+		Bot Name: dkxceTB1bot
+		App Name: follow
+		Syntax: https://t.me/dkxceTB1bot/follow?startapp=follow_{Follower.ID}
+	-->
+	
 	<head>
 		<meta charset="utf-8"/>
 		<meta name="robots" content="noindex, follow"/>
-		<title>OruxPalsServer Follow Mini App</title>		
+		<title>OruxPalsServer Follow TMA</title>		
 	</head>	
+	
 	<body style="margin:0px;padding:0px;"></body>
+	
 	<script type="text/javascript">
 		function getQueryVariable(variable) 
 		{
-			var query = window.location.search.substring(1);
-			var vars = query.split('&');
+			let query = window.location.search.substring(1);
+			let vars = query.split('&');
 			for (var i = 0; i < vars.length; i++) 
 			{
-				var pair = vars[i].split('=');
+				let pair = vars[i].split('=');
 				if (decodeURIComponent(pair[0]) == variable)
 					return decodeURIComponent(pair[1]);
 			};
 		};
 
-	    var f = '86456123453142658763587'; // DEMO
+	    var f = '86456123453142658763587'; // DEMO TRACKER //
+		
+		// PARSE
 		try
 		{
 			let params = new URL(document.location).searchParams;			
@@ -28,17 +42,19 @@
 		} 
 		catch (e) {};
 		
-		if (f == '86456123453142658763587')
+		// ENSURE
+		try
 		{
-			try
+			if (f == '86456123453142658763587')
 			{
 				let startapp = getQueryVariable('tgWebAppStartParam');
 				let spl = startapp.split('_');
 				if (spl.length == 2 && spl[0] == 'follow') f = spl[1];
-			}
-			catch (e) {};
-		};
+			};
+		}
+		catch (e) {};
 		
+		// REDIRECT
 		window.location.replace("https://livegpstracks.com/aptracker.php?f=" + f);
 	</script>
 </html>
