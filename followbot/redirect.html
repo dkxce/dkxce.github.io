@@ -6,6 +6,8 @@
 	</head>	
 	<body style="margin:0px;padding:0px;"></body>
 	<script type="text/javascript">
+		alert(1);
+		alert(window.location.search);
 		let params = new URL(document.location).searchParams;
 		alert(params);
 		let startapp = params.get("tgWebAppStartParam");		
