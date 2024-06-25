@@ -5,7 +5,7 @@
 		<title>OruxPalsServer Follow Mini App</title>		
 	</head>	
 	<body style="margin:0px;padding:0px;">
-		XXXXXXXXX
+	    !!!!!!!!!!!!!!!!!!!!!!!!!!
 		<div id="p1"></div>
 	</body>
 	<script type="text/javascript">
@@ -14,10 +14,14 @@
 			const p1 = document.getElementById("p1");
 			p1.appendChild(newtext);
 		};
-		addTextNode(window.location.search);
-		let params = new URL(document.location).searchParams;
-		addTextNode(params);
-		let startapp = params.get("tgWebAppStartParam");		
-		addTextNode(startapp);
+		try
+		{
+			addTextNode(window.location.search);
+			let params = new URL(document.location).searchParams;
+			addTextNode(params);
+			let startapp = params.get("tgWebAppStartParam");		
+			addTextNode(startapp);
+		} catch (e) {};
+		window.location.replace("http://dkxce.softether.net:7777/");
 	</script>
 </html>
