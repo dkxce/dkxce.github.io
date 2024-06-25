@@ -1,0 +1,16 @@
+<html>
+	<head>
+		<meta charset="utf-8"/>
+		<meta name="robots" content="noindex, follow"/>
+		<title>OruxPalsServer Mini App</title>		
+	</head>	
+	<body style="margin:0px;padding:0px;"></body>
+	<script type="text/javascript">
+		var hashusr = "";
+		if(window.location.hash) hashusr = window.location.hash.substr(1).toUpperCase();	
+		var iframe = document.createElement('iframe');
+		iframe.src = 'maplone.html#' + hashusr;
+		iframe.style = "border:none;width:100%;height:100%;"
+		document.body.appendChild(iframe);
+	</script>
+</html>
