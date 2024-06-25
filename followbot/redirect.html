@@ -4,13 +4,19 @@
 		<meta name="robots" content="noindex, follow"/>
 		<title>OruxPalsServer Follow Mini App</title>		
 	</head>	
-	<body style="margin:0px;padding:0px;"></body>
+	<body style="margin:0px;padding:0px;">
+		<div id="p1"></div>
+	</body>
 	<script type="text/javascript">
-		alert(1);
-		alert(window.location.search);
+		function addTextNode(text) {
+			const newtext = document.createTextNode(text + " --------- ");
+			const p1 = document.getElementById("p1");
+			p1.appendChild(newtext);
+		};
+		addTextNode(window.location.search);
 		let params = new URL(document.location).searchParams;
-		alert(params);
+		addTextNode(params);
 		let startapp = params.get("tgWebAppStartParam");		
-		alert(startapp);
+		addTextNode(startapp);
 	</script>
 </html>
