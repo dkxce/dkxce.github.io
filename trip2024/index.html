@@ -21,10 +21,19 @@
 		map.setView(new L.LatLng(50.55,37.55), 8);		
 		
 		var control = L.control.layers(null, null, { collapsed:false }).addTo(map);	
-		control.addOverlay(L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom: 17, opacity: 1}), 'OpenTopoMap');
+		control.addOverlay(L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom: 17, opacity: 1}), '(MAP) OpenTopoMap');
+		
+		var Cyclemap = new L.TileLayer('https://{s}.tile.hosted.thunderforest.com/cycle/{z}/{x}/{y}.png', { attribution: ' © <a href="https://opencyclemap.org">OSM Cyclemap</a>', lttype: 'Cyclemap' });
+		control.addOverlay(Cyclemap, '(MAP) Cyclemap');
+		
+		var mapMTB = new L.TileLayer('https://tile.mtbmap.cz/mtbmap_tiles/{z}/{x}/{y}.png', {attribution: ' © <a href="https://www.openstreetmap.org/copyright">Openstreetmap</a> & USGS', maxZoom: 16, lttype: 'mapMTB'});
+		control.addOverlay(mapMTB, '(MAP) MTB');
+		
+		var mapOutdoor = new L.TileLayer('https://a.tile.thunderforest.com/outdoors/{z}/{x}/{y}.png', {attribution: ' © <a href="https://www.openstreetmap.org/copyright">Openstreetmap</a> & <a href="https://www.opencyclemap.org">Andy Alian</a>', lttype: 'mapOutdoor'});
+		control.addOverlay(mapOutdoor, '(MAP) Outdoor');
 				
 		var kmz = L.kmzLayer().addTo(map); // https://github.com/Raruto/leaflet-kmz
-		kmz.on('load', function(e) { map.fitBounds(e.layer.getBounds()); control.addOverlay(e.layer, e.name); });		
+		kmz.on('load', function(e) { map.fitBounds(e.layer.getBounds()); control.addOverlay(e.layer, '(KMZ) ' + e.name); });		
 		
 		try { var hash = window.location.hash.substr(1); if (hash != '') kmz.load('kmz/' + hash); } catch (e) {};
 		
