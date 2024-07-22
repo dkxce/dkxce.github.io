@@ -1,0 +1,39 @@
+<html>
+<head>
+	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.3/leaflet.js"></script>
+	<script src="js/coords.js"></script>
+	<script src="js/leaflet.hotline.js"></script>
+	<script src="https://unpkg.com/leaflet-kmz@latest/dist/leaflet-kmz.js"></script>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.3/leaflet.css" />
+	<style>		
+		#map {width: 100%; height: 100%; padding: 0px; margin: 0px; }
+		#top {width: 400px; height:24px; position: absolute; left: 70px; top: 8px; z-index: 1001; font-weight: bold; }
+	</style>
+</head>
+<body>
+	<div id="map"></div>
+	<div id="top"><a href="Boguchar.html">Boguchar</a></div>
+	<script>
+		var tiles = L.tileLayer('https://{s}.tile.osm.org/{z}/{x}/{y}.png');
+		var map = L.map('map', {layers: [tiles], scrollWheelZoom: true, dragging: true, tap: false });		
+		map.setView(new L.LatLng(50.55,37.55), 8);		
+		
+		var control = L.control.layers(null, null, { collapsed:false }).addTo(map);	
+		control.addOverlay(L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom: 17, opacity: 1}), 'OpenTopoMap');
+				
+		var kmz = L.kmzLayer().addTo(map); // https://github.com/Raruto/leaflet-kmz
+		kmz.on('load', function(e) { map.fitBounds(e.layer.getBounds()); control.addOverlay(e.layer, e.name); });		
+		
+		try { var hash = window.location.hash.substr(1); if (hash != '') kmz.load('kmz/' + hash); } catch (e) {};
+		
+		// LOAD kmz
+		kmz.load('kmz/Bike_Trips_2024.kmz');
+		kmz.load('kmz/tracks.skif4x4.ru.kmz');
+		kmz.load('kmz/Veloradar.kmz');
+		kmz.load('kmz/gfisht.kmz');
+		kmz.load('kmz/Shaumyan.kmz');
+	</script>
+</body>
+</html>
