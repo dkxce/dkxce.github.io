@@ -5,12 +5,12 @@
 	<script src="js/leaflet.js"></script>
 	<script src="js/coords.js"></script>
 	<script src="js/leaflet.hotline.js"></script>
-	<script src="js/yandex.js"></script>
 	<script src="js/gpx.min_075.js"></script>
+	<script src="https://unpkg.com/leaflet-kmz@latest/dist/leaflet-kmz.js"></script>
 	<script src="js/leaflet.polylineDecorator.js"></script>
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.3/leaflet.css" />
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.3/leaflet.css" />
 	<style>		
+		body { padding: 0 0 0 0; margin: 0px; }
 		#map {width: 100%; height: 100%; padding: 0px; margin: 0px; }
 		#top {width: 400px; height:24px; position: absolute; left: 70px; top: 8px; z-index: 1001; font-weight: bold; }
 	</style>
@@ -21,7 +21,7 @@
 	<script>
 		var tiles = L.tileLayer('https://{s}.tile.osm.org/{z}/{x}/{y}.png');
 		var map = L.map('map', {layers: [tiles], scrollWheelZoom: true, dragging: true, tap: false });		
-		map.setView(new L.LatLng(50.55,37.55), 8);
+		map.setView(new L.LatLng(50.55,37.55), 8);		
 		
 		var osmgerman = L.tileLayer('http://{s}.tile.openstreetmap.de/tiles/osmde/{z}/{x}/{y}.png', { maxZoom: 17, attribution: 'Maps &copy; <a href="http://openstreetmap.org">OSM</a>', subdomains: ['a','b','c'] });		
 		var osmhot = L.tileLayer('http://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', { maxZoom: 17, attribution: 'Maps &copy; <a href="http://openstreetmap.org">OSM</a>', subdomains: ['a','b','c'] });		
@@ -63,52 +63,98 @@
 				  };
 		L.control.layers(basemaps, overlays, { collapsed: true }).addTo(map);		
 		var control = L.control.layers(null, null, { collapsed: false }).addTo(map);
+			
+		var kmz = L.kmzLayer().addTo(map); // https://github.com/Raruto/leaflet-kmz
+		kmz.on('load', function(e) {
+			var bounds = e.layer.getBounds();
+			 map.fitBounds(bounds);
+			control.addOverlay(e.layer, e.name);
+		});		
+			
+			
+		const params = new Proxy(new URLSearchParams(window.location.search), { get: (searchParams, prop) => searchParams.get(prop), });
+			
+		var hashes = params.file != null ? params.file : window.location.hash.substr(1);
+		if (hashes == null || hashes == '') hashes = 'test.kmz';
+		if (hashes.startsWith('[')) hashes = hashes.replace('[','').replace(']','').split(',');
+		else hashes = [hashes];
 		
-		
-		var hash = window.location.hash.substr(1);
-		if (hash != '' && hash.length == 4)
-		{		
-			// https://allorigins.win/
-			var url = 'http://xtrex.ru/json/' + hash + '.json';
-			$.getJSON('https://api.allorigins.win/get?url=' + encodeURIComponent(url), function (data) 
+		for (let index in hashes) try
+		{
+			var hash = hashes[index];
+			
+			// GPX
+			if (hash != '' && hash.toLowerCase().endsWith('.gpx'))
 			{
-			   var jObj = JSON.parse(data.contents).tracks;
-			   var pts = jObj[0].points;
-			   
-			   coords = [];
-			   for (let i = 0; i < pts.length; i++)
-			   {
-					if(coords.length < 4) coords.push([pts[i][0],pts[i][1],0]);
-					else coords.push([pts[i][0],pts[i][1],pts[i][4]]);
-			   };
-			   
-			   var hotlineLayer = L.hotline(coords, { min: 0, max: 150,
-				  palette: { 0.0: '#FF0000', 0.25: '#FFFF00', 0.45: '#00FF00', 0.6: '#C0FF00', 0.75: '#A2D2FF', 0.9: '#BDE0FE', 1.0: '#EDF2F4' },
-				  weight: 8, outlineColor: '#000000', outlineWidth: 1
-			   });
+				let url = hash;
+				if (url.startsWith('http')) url = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
+				else url = 'files/' + hash;
 				
-			   var bounds = hotlineLayer.getBounds();
-			   map.fitBounds(bounds);
-			   hotlineLayer.addTo(map);
-			   control.addOverlay(hotlineLayer, jObj[0].name);
-			   
-			   hotlineLayer.on('click', function (e) {
-					let lp = e.layerPoint;
-					$('#top').text(e.latlng.toString() + ' + ' + lp.toString());
-					let np = findNearestPoint(pts,[e.latlng.lat,e.latlng.lng]);
-					$('#top').text('Speed: ~' + (np[4]).toString() + ' km/h');
-			   });
-			  
-			   var decorator = L.polylineDecorator(hotlineLayer, {
-					patterns: [{offset: 0, repeat: 30, symbol: L.Symbol.arrowHead({pixelSize: 7, pathOptions: { fillOpacity: 0.75, weight: 0, color: 'black' }})}]
-			   });
-			   decorator.addTo(map);
-			   control.addOverlay(decorator, jObj[0].name + ' <b>&gt;</b>');
-									
-			   L.circleMarker([coords[0][0], coords[0][1]], { radius: 10, fillColor: '#600000', fillOpacity: 1,  color: '#fff', weight: 2, }).addTo(map);
-			   L.circleMarker([coords[coords.length-1][0], coords[coords.length-1][1]], { radius: 10, fillColor: '#009000', fillOpacity: 1,  color: '#fff', weight: 2, }).addTo(map);
-			});
-		};
+				var gpx = new L.GPX(url, {async: true, 
+					polyline_options: {color: 'blue', opacity: 0.67, weight: 5, lineCap: 'round'},
+					markers: {startIcon: 'icons/pin-icon-start.png', endIcon: 'icons/pin-icon-end.png'}, 
+					marker_options: {iconSize: [20,30], iconAnchor:[20,30]}
+				}).addTo(map);
+				gpx.on('loaded', function(e) 
+				{
+					  map.fitBounds(e.target.getBounds());
+					  control.addOverlay(e.target, '(GPX) ' + e.target.get_name());
+				});		
+			};
+			
+			// KMZ
+			if (hash != '' && hash.toLowerCase().endsWith('.kmz'))
+			{
+				let url = hash;
+				if (url.startsWith('http')) url = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
+				else url = 'files/' + hash;
+				kmz.load('files/' + hash);	
+			};
+			
+			// Xtex
+			if (hash != '' && hash.length == 4)
+			{
+				var url = 'http://xtrex.ru/json/' + hash + '.json';
+				$.getJSON('https://api.allorigins.win/get?url=' + encodeURIComponent(url), function (data) 
+				{
+				   var jObj = JSON.parse(data.contents).tracks;
+				   var pts = jObj[0].points;
+				   
+				   coords = [];
+				   for (let i = 0; i < pts.length; i++)
+				   {
+						if(coords.length < 4) coords.push([pts[i][0],pts[i][1],0]);
+						else coords.push([pts[i][0],pts[i][1],pts[i][4]]);
+				   };
+				   
+				   var hotlineLayer = L.hotline(coords, { min: 0, max: 150,
+					  palette: { 0.0: '#FF0000', 0.25: '#FFFF00', 0.45: '#00FF00', 0.6: '#C0FF00', 0.75: '#A2D2FF', 0.9: '#BDE0FE', 1.0: '#EDF2F4' },
+					  weight: 8, outlineColor: '#000000', outlineWidth: 1
+				   });
+					
+				   var bounds = hotlineLayer.getBounds();
+				   map.fitBounds(bounds);
+				   hotlineLayer.addTo(map);
+				   control.addOverlay(hotlineLayer, jObj[0].name);
+				   
+				   hotlineLayer.on('click', function (e) {
+						let lp = e.layerPoint;
+						$('#top').text(e.latlng.toString() + ' + ' + lp.toString());
+						let np = findNearestPoint(pts,[e.latlng.lat,e.latlng.lng]);
+						$('#top').text('Speed: ~' + (np[4]).toString() + ' km/h');
+				   });
+				   
+				   var decorator = L.polylineDecorator(hotlineLayer, {
+						patterns: [{offset: 0, repeat: 30, symbol: L.Symbol.arrowHead({pixelSize: 7, pathOptions: { fillOpacity: 0.75, weight: 0, color: 'black' }})}]
+				   });
+				   decorator.addTo(map);
+				   control.addOverlay(decorator, jObj[0].name + ' <b>&gt;</b>');
+					
+				   L.circleMarker([coords[0][0], coords[0][1]], { radius: 10, fillColor: '#600000', fillOpacity: 1,  color: '#fff', weight: 2, }).addTo(map);
+				   L.circleMarker([coords[coords.length-1][0], coords[coords.length-1][1]], { radius: 10, fillColor: '#009000', fillOpacity: 1,  color: '#fff', weight: 2, }).addTo(map);
+				});
+			};
+		} catch (e) {};
 		
 		var findNearestPoint = function(points, point)
 		{
