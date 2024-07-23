@@ -2,13 +2,12 @@
 <head>
 	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-	<script src="js/leaflet.js"></script>
+	<script src="js/leaflet_ya.js"></script>
 	<script src="js/coords.js"></script>
 	<script src="js/leaflet.hotline.js"></script>
 	<script src="js/yandex.js"></script>
 	<script src="https://unpkg.com/leaflet-kmz@latest/dist/leaflet-kmz.js"></script>
 	<script type="text/javascript">
-		/*
 			$(document).ready(function() {
 				[
 					'https://api-maps.yandex.ru/2.0/?load=package.map&lang=ru_RU'
@@ -23,7 +22,6 @@
 					}, 1000);
 				});
 			});
-		*/
 	</script>
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.3/leaflet.css" />
 	<style>		
@@ -53,17 +51,16 @@
 		var GoogleMapOverlayLayer = new L.TileLayer('http://{s}.google.com/vt/lyrs=h@177000000&hl=ru&src=app&x={x}&s=&y={y}&z={z}&s=G', {attribution: 'Data, imagery and map information provided by <a href="http://maps.google.com" target="_blank">Google</a>', maxZoom: 19, subdomains: ['mts0','mts1'], zIndex: 4});
 		var GoogleTrafficLayer = new L.TileLayer('http://{s}.google.com/vt?hl=ru&src=app&lyrs=m@177000000,traffic|seconds_into_week:-1&x={x}&s=&y={y}&z={z}&style=15', {attribution: 'Traffic data provided by <a href="http://maps.google.com" target="_blank">Google</a>', maxZoom: 19, subdomains: ['mts0','mts1'], traffic: true, zIndex: 21});
 		
-		var ESRI = new L.TileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}.png', { attribution: ' © <a href="https://www.arcgis.com/features/">ArcGIS</a>', lttype: 'ESRI' });
-		var ESRISat = new L.TileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}.png', { attribution: ' © <a href="https://arcgisonline.com">ArcGIS</a>', lttype: 'ESRISat' });
-
-		/*
 		var yndx = new L.Yandex();
 		var yndxS = new L.Yandex("satellite");
 		var yndxH = new L.Yandex("hybrid");
 		var yndxN = new L.Yandex("publicMap");
 		var ytraffic = new L.Yandex("null", {traffic:true, opacity:0.8, overlay:true});
-		*/
-				
+		
+		var ESRI = new L.TileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}.png', { attribution: ' © <a href="https://www.arcgis.com/features/">ArcGIS</a>', lttype: 'ESRI' });
+		var ESRISat = new L.TileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}.png', { attribution: ' © <a href="https://arcgisonline.com">ArcGIS</a>', lttype: 'ESRISat' });
+
+		
 		var basemaps = {					
 					  "OSM Mapnik": tiles, 
 					  "OSM German Style": osmgerman, 
@@ -76,20 +73,16 @@
 					  "ThunderForest": thunderforest,
 					  "WikiMapia": osmWikiMapTiles,
 					  "Google (Maps)": GoogleMapLayer,
-					  /*
 					  "Yandex (Maps)": yndxN,
 					  "Yandex (Sattelite)": yndxS,
 					  "Yandex (Hybrid)": yndxH,
-					  */
 					  'ArcGIS ESRI (Maps)': ESRI, 
 					  'ArcGIS ESRI (Sattelite)': ESRISat, 
 				  };
 		var overlays = {
 					  "Google (Hybrid)": GoogleMapOverlayLayer,
 					  "Google (Traffic)": GoogleTrafficLayer,
-					  /*
-					  "Yandex (Traffic)": ytraffic,		
-					  */
+					  "Yandex (Traffic)": ytraffic,						  
 				  };
 		L.control.layers(basemaps, overlays, { collapsed: true }).addTo(map);		
 		var control = L.control.layers(null, null, { collapsed: false }).addTo(map);	

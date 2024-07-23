@@ -2,13 +2,11 @@
 <head>
 	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-	<script src="js/leaflet.js"></script>
+	<script src="js/leaflet_ya.js"></script>
 	<script src="js/coords.js"></script>
-	<script src="js/leaflet.hotline.js"></script>
 	<script src="js/yandex.js"></script>
-	<script src="https://unpkg.com/leaflet-kmz@latest/dist/leaflet-kmz.js"></script>
+	<script src="js/leaflet-kmz_075.js"></script>
 	<script type="text/javascript">
-		/*
 			$(document).ready(function() {
 				[
 					'https://api-maps.yandex.ru/2.0/?load=package.map&lang=ru_RU'
@@ -23,19 +21,27 @@
 					}, 1000);
 				});
 			});
-		*/
 	</script>
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.3/leaflet.css" />
 	<style>		
 		#map {width: 100%; height: 100%; padding: 0px; margin: 0px; }
 	</style>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.3/leaflet.css" />
+	<style>		
+		#map {width: 100%; height: 100%; padding: 0px; margin: 0px; }
+		#top {width: 400px; height:24px; position: absolute; left: 70px; top: 8px; z-index: 1001; font-weight: bold; }
+	</style>
 </head>
 <body>
 	<div id="map"></div>
+	<div id="top">
+		<a href="Boguchar.html">Boguchar</a> | 
+		<a href="index.html">Index</a>
+	</div>
 	<script>
 		var tiles = L.tileLayer('https://{s}.tile.osm.org/{z}/{x}/{y}.png');
 		var map = L.map('map', {layers: [tiles], scrollWheelZoom: true, dragging: true, tap: false });		
-		map.setView(new L.LatLng(50.55,37.55),8);		
+		map.setView(new L.LatLng(50.55,37.55), 8);		
 		
 		var osmgerman = L.tileLayer('http://{s}.tile.openstreetmap.de/tiles/osmde/{z}/{x}/{y}.png', { maxZoom: 17, attribution: 'Maps &copy; <a href="http://openstreetmap.org">OSM</a>', subdomains: ['a','b','c'] });		
 		var osmhot = L.tileLayer('http://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', { maxZoom: 17, attribution: 'Maps &copy; <a href="http://openstreetmap.org">OSM</a>', subdomains: ['a','b','c'] });		
@@ -56,13 +62,11 @@
 		var ESRI = new L.TileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}.png', { attribution: ' © <a href="https://www.arcgis.com/features/">ArcGIS</a>', lttype: 'ESRI' });
 		var ESRISat = new L.TileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}.png', { attribution: ' © <a href="https://arcgisonline.com">ArcGIS</a>', lttype: 'ESRISat' });
 
-		/*
 		var yndx = new L.Yandex();
 		var yndxS = new L.Yandex("satellite");
 		var yndxH = new L.Yandex("hybrid");
 		var yndxN = new L.Yandex("publicMap");
 		var ytraffic = new L.Yandex("null", {traffic:true, opacity:0.8, overlay:true});
-		*/
 				
 		var basemaps = {					
 					  "OSM Mapnik": tiles, 
@@ -76,40 +80,27 @@
 					  "ThunderForest": thunderforest,
 					  "WikiMapia": osmWikiMapTiles,
 					  "Google (Maps)": GoogleMapLayer,
-					  /*
 					  "Yandex (Maps)": yndxN,
 					  "Yandex (Sattelite)": yndxS,
 					  "Yandex (Hybrid)": yndxH,
-					  */
 					  'ArcGIS ESRI (Maps)': ESRI, 
 					  'ArcGIS ESRI (Sattelite)': ESRISat, 
 				  };
 		var overlays = {
 					  "Google (Hybrid)": GoogleMapOverlayLayer,
 					  "Google (Traffic)": GoogleTrafficLayer,
-					  /*
 					  "Yandex (Traffic)": ytraffic,		
-					  */
 				  };
 		L.control.layers(basemaps, overlays, { collapsed: true }).addTo(map);		
-		var control = L.control.layers(null, null, { collapsed: false }).addTo(map);	
+		var control = L.control.layers(null, null, { collapsed: false }).addTo(map);
 				
 		var kmz = L.kmzLayer().addTo(map); // https://github.com/Raruto/leaflet-kmz
-		kmz.on('load', function(e) {
-			var bounds = e.layer.getBounds();
-			 map.fitBounds(bounds);
-			control.addOverlay(e.layer, e.name);
-		});		
+		kmz.on('load', function(e) { map.fitBounds(e.layer.getBounds()); control.addOverlay(e.layer, e.name); });		
 		
-		try
-		{
-			var hash = window.location.hash.substr(1);		
-			if (hash != '') kmz.load('kmz/' + hash);
-		} catch (e) {};
+		try { var hash = window.location.hash.substr(1); if (hash != '') kmz.load('kmz/' + hash); } catch (e) {};
 		
 		// LOAD kmz
-		kmz.load('kmz/Boguchar 2024.kmz');
-		// kmz.load('kmz/Bike Trips 2024.kmz');
+		kmz.load('kmz/Boguchar_2024.kmz');
 	</script>
 </body>
 </html>
