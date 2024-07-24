@@ -20,7 +20,7 @@
 	<div id="top"></div>
 	<script>
 		// icons: https://www.flaticon.com/free-icons/temperature
-	
+		
 		var tiles = L.tileLayer('https://{s}.tile.osm.org/{z}/{x}/{y}.png');
 		var map = L.map('map', {layers: [tiles], scrollWheelZoom: true, dragging: true, tap: false });		
 		map.setView(new L.LatLng(50.55,37.55), 8);		
@@ -115,6 +115,7 @@
 							 marker.options.rotationAngle = jObj.azimuth - 90;
 							 marker.setLatLng(lstpos); 
 							 marker.setPopupContent(popupText); // .openPopup();
+							 if (document.hidden) map.setView(lstpos, 14);
 						 };
 						 $('#top')[0].innerHTML = (popupText);
 						 if (hotlineLayer != null) hotlineLayer.addLatLng([jObj.lat, jObj.lng, jObj.speed]);
