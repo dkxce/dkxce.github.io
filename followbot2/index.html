@@ -118,32 +118,35 @@
                 turl = 'https://driver-updater.com/api/v1/front/proxyquery/?rnd='+Math.random()+'&My-Proxy-Query=' + btoa(turl);				
 				$.getJSON(turl, function (data) 
 				{
-					let jObjs = data; // JSON.parse(data.contents);
-					if (jObjs.length > 1)
+					try
 					{
-						let coords = [];
-						let lst = null;
-						for (let i = 0; i < jObjs.length; i++) 
+						let jObjs = data; // JSON.parse(data.contents);
+						if (jObjs.length > 1)
 						{
-							coords.push([jObjs[i].lat,jObjs[i].lng,jObjs[i].speed]);
-							lst = [jObjs[i].lat,jObjs[i].lng];
-						};
-						coords.push([lstpos.lat,lstpos.lng,lstspd]);
-						
-						hotlineLayer = L.hotline(coords, { min: 0, max: 150,
-						   palette: { 0.0: '#FF0000', 0.25: '#FFFF00', 0.45: '#00FF00', 0.6: '#C0FF00', 0.75: '#A2D2FF', 0.9: '#BDE0FE', 1.0: '#EDF2F4' },
-						   weight: 8, outlineColor: '#000000', outlineWidth: 1
-						});
-						
-						hotlineLayer.addTo(map);
-						control.addOverlay(hotlineLayer, nme + ' (trk)');
+							let coords = [];
+							let lst = null;
+							for (let i = 0; i < jObjs.length; i++) 
+							{
+								coords.push([jObjs[i].lat,jObjs[i].lng,jObjs[i].speed]);
+								lst = [jObjs[i].lat,jObjs[i].lng];
+							};
+							coords.push([lstpos.lat,lstpos.lng,lstspd]);
+							
+							hotlineLayer = L.hotline(coords, { min: 0, max: 150,
+							   palette: { 0.0: '#FF0000', 0.25: '#FFFF00', 0.45: '#00FF00', 0.6: '#C0FF00', 0.75: '#A2D2FF', 0.9: '#BDE0FE', 1.0: '#EDF2F4' },
+							   weight: 8, outlineColor: '#000000', outlineWidth: 1
+							});
+							
+							hotlineLayer.addTo(map);
+							control.addOverlay(hotlineLayer, nme + ' (trk)');
 
-						let decorator = L.polylineDecorator(hotlineLayer, {
-							patterns: [{offset: 0, repeat: 30, symbol: L.Symbol.arrowHead({pixelSize: 7, pathOptions: { fillOpacity: 0.75, weight: 0, color: 'black' }})}]
-						});
-						decorator.addTo(map);
-						control.addOverlay(decorator, nme + ' (arw)');
-					};
+							let decorator = L.polylineDecorator(hotlineLayer, {
+								patterns: [{offset: 0, repeat: 30, symbol: L.Symbol.arrowHead({pixelSize: 7, pathOptions: { fillOpacity: 0.75, weight: 0, color: 'black' }})}]
+							});
+							decorator.addTo(map);
+							control.addOverlay(decorator, nme + ' (arw)');
+						};
+					} catch (e) {};
 				});
 			};
 			getTrack();
