@@ -120,6 +120,7 @@
 					 if (dst > 5.5)
 					 { 
 						 let nmurl = 'http://narodmon.ru/api/sensorsNearby?lat='+lstpos.lat+'&lng='+lstpos.lng+'&radius=10&types=1,2&uuid=ab4ec47e07ba86074d59f6b7d86fafff&api_key=k69KecaSFegvV&lang=ru';
+						 nmurl = 'https://driver-updater.com/api/v1/front/proxyquery/?rnd='+Math.random()+'&My-Proxy-Query=' + btoa(nmurl);	
 						 $.getJSON(nmurl, function (data) 
 						 {
 							try
