@@ -72,9 +72,11 @@
 		});		
 			
 		var marker = null;
+		var narodmon = null;
 		var hotlineLayer = null;
 		var lstpos = null;
 		var lstspd = 0;
+		var wthpos = [0,0];
 		const params = new Proxy(new URLSearchParams(window.location.search), { get: (searchParams, prop) => searchParams.get(prop), });			
 		var who = params.who != null ? params.who : window.location.hash.substr(1);	
 		var nme = params.nme != null ? params.nme : who;
@@ -91,21 +93,65 @@
 					 var jObj = JSON.parse(data.contents)[0];
 					 lstpos = new L.LatLng(jObj.lat, jObj.lng);
 					 lstspd = jObj.speed;
+					 let popupText = '<span style="color:blue;"><b>' + jObj.speed.toString() + ' km/h</b></span> <span style="color:maroon;">' + jObj.t + '</span> ' + jObj.d + ' <b>' + nme + '</b>';
 					 if (marker == null)
 					 {
-						 map.setView(lstpos, 13);	
+						 map.setView(lstpos, 14);	
 						 var carIcon = L.icon({ iconUrl: 'icons/car.png', iconSize: [32, 32],iconAnchor: [16,  16] });
-						 var markerOptions = { title: "Location", clickable: true, draggable: false, icon: carIcon, rotationAngle: jObj.azimuth - 90, };
+						 var tempIcon = L.icon({ iconUrl: 'icons/temperature.png', iconSize: [32, 32],iconAnchor: [16,  16] });
+						 var humiIcon = L.icon({ iconUrl: 'icons/humidity.png', iconSize: [32, 32],iconAnchor: [16,  16] });
+						 var markerOptions = { title: nme == who ? "Location" : nme, clickable: true, draggable: false, icon: carIcon, rotationAngle: jObj.azimuth - 90, };
 						 marker = L.marker(lstpos, markerOptions);
-						 marker.bindPopup(jObj.speed.toString() + ' km/h ' + jObj.t + ' ' + jObj.d); // .openPopup();
+						 marker.bindPopup(popupText); // .openPopup();
 						 marker.addTo(map);
+						 control.addOverlay(marker, nme + ' (CAR)');						 						
 					 }
 					 else 
 					 {
+						 marker.options.rotationAngle = jObj.azimuth - 90;
 						 marker.setLatLng(lstpos); 
-						 marker.bindPopup(jObj.speed.toString() + ' km/h ' + jObj.t + ' ' + jObj.d); // .openPopup();
+						 marker.setPopupContent(popupText); // .openPopup();
 					 };
-					 if (hotlineLayer != null) hotlineLayer.addLatLng([jObj.lat, jObj.lng, jObj.speed]);					 
+					 $('#top')[0].innerHTML = (popupText);
+					 if (hotlineLayer != null) hotlineLayer.addLatLng([jObj.lat, jObj.lng, jObj.speed]);
+
+					 // narodmon
+					 let dst = getDistance(lstpos.lat, lstpos.lng, wthpos[0], wthpos[1]);
+					 if (dst > 5.5)
+					 { 
+						 let nmurl = 'http://narodmon.ru/api/sensorsNearby?lat='+lstpos.lat+'&lng='+lstpos.lng+'&radius=10&types=1,2&uuid=ab4ec47e07ba86074d59f6b7d86fafff&api_key=k69KecaSFegvV&lang=ru';
+						 $.getJSON(nmurl, function (data) 
+						 {
+							try
+							{
+								let devices = data.devices;
+								let markers = [];
+								for (let i = 0; i < devices.length; i++)
+									for (j = 0; j < devices[i].sensors.length; j++)
+									{
+										if (devices[i].sensors[j].type != 1 && devices[i].sensors[j].type != 2) continue;
+										let title = devices[i].sensors[j].value + devices[i].sensors[j].unit + ' (' + devices[i].sensors[j].name + ')';
+										let mIcon = devices[i].sensors[j].type == 2 ? humiIcon : tempIcon;
+										let tMarker = L.marker([devices[i].lat,devices[i].lon], { title: title, clickable: true, draggable: false, icon: mIcon, });
+										tMarker.bindPopup(title);
+										markers.push(tMarker);
+									};
+								if (markers.length > 0)
+								{
+									wthpos = [lstpos.lat, lstpos.lng];
+									if (narodmon == null)
+									{
+										narodmon = L.layerGroup(markers);
+										marker.addTo(narodmon);
+										control.addOverlay(narodmon, 'Weather (Pogoda)');
+									}
+									else 
+										for (let k = 0; k < markers.length; k++)
+											narodmon.addLayer(markers[k]);
+								};
+							} catch (e) {};
+						 });
+					};
 				});
 			};
 			reload();
@@ -138,19 +184,35 @@
 							});
 							
 							hotlineLayer.addTo(map);
-							control.addOverlay(hotlineLayer, nme + ' (trk)');
+							control.addOverlay(hotlineLayer, nme + ' (TRACK)');
 
 							let decorator = L.polylineDecorator(hotlineLayer, {
 								patterns: [{offset: 0, repeat: 30, symbol: L.Symbol.arrowHead({pixelSize: 7, pathOptions: { fillOpacity: 0.75, weight: 0, color: 'black' }})}]
 							});
 							decorator.addTo(map);
-							control.addOverlay(decorator, nme + ' (arw)');
+							control.addOverlay(decorator, nme + ' (ARROWS)');
 						};
 					} catch (e) {};
 				});
 			};
 			getTrack();
-		} catch (e) {};		
+		} catch (e) {};	
+
+		var getDistance = function(lat1, lon1, lat2, lon2) 
+		{
+			let toRad = (v) => v * Math.PI / 180;	
+			
+			var R = 6371; // km
+			var dLat = toRad(lat2-lat1);
+			var dLon = toRad(lon2-lon1);
+			var lat1 = toRad(lat1);
+			var lat2 = toRad(lat2);
+
+			var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.sin(dLon/2) * Math.sin(dLon/2) * Math.cos(lat1) * Math.cos(lat2); 
+			var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+			var d = R * c;
+			return d;
+		};	
 	</script>
 </body>
 </html>
