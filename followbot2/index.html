@@ -93,67 +93,76 @@
 				$.getJSON(url, function (data) 
 				{
 					 var jObj = JSON.parse(data.contents)[0];
-					 lstpos = new L.LatLng(jObj.lat, jObj.lng);
-					 lstspd = jObj.speed;
-					 let popupText = '<span style="color:blue;"><b>' + jObj.speed.toString() + ' km/h</b></span> <span style="color:maroon;">' + jObj.t + '</span> ' + jObj.d + ' <b>' + nme + '</b>';
-					 if (marker == null)
+					 if (lstpos == null || (lstpos.lat != jObj.lat && lstpos.lat != jObj.lng))
 					 {
-						 map.setView(lstpos, 14);	
-						 var carIcon = L.icon({ iconUrl: 'icons/car.png', iconSize: [32, 32],iconAnchor: [16,  16] });
-						 var tempIcon = L.icon({ iconUrl: 'icons/temperature.png', iconSize: [32, 32],iconAnchor: [16,  16] });
-						 var humiIcon = L.icon({ iconUrl: 'icons/humidity.png', iconSize: [32, 32],iconAnchor: [16,  16] });
-						 var markerOptions = { title: nme == who ? "Location" : nme, clickable: true, draggable: false, icon: carIcon, rotationAngle: jObj.azimuth - 90, };
-						 marker = L.marker(lstpos, markerOptions);
-						 marker.bindPopup(popupText); // .openPopup();
-						 marker.addTo(map);
-						 control.addOverlay(marker, nme + ' (CAR)');						 						
-					 }
-					 else 
-					 {
-						 marker.options.rotationAngle = jObj.azimuth - 90;
-						 marker.setLatLng(lstpos); 
-						 marker.setPopupContent(popupText); // .openPopup();
-					 };
-					 $('#top')[0].innerHTML = (popupText);
-					 if (hotlineLayer != null) hotlineLayer.addLatLng([jObj.lat, jObj.lng, jObj.speed]);
-
-					 // narodmon
-					 let dst = getDistance(lstpos.lat, lstpos.lng, wthpos[0], wthpos[1]);
-					 if (dst > 5.5)
-					 { 
-						 let nmurl = 'http://narodmon.ru/api/sensorsNearby?lat='+lstpos.lat+'&lng='+lstpos.lng+'&radius=10&types=1,2&uuid=ab4ec47e07ba86074d59f6b7d86fafff&api_key=k69KecaSFegvV&lang=ru';
-						 nmurl = 'https://driver-updater.com/api/v1/front/proxyquery/?rnd='+Math.random()+'&My-Proxy-Query=' + btoa(nmurl);	
-						 $.getJSON(nmurl, function (data) 
+						 lstpos = new L.LatLng(jObj.lat, jObj.lng);					 
+						 lstspd = jObj.speed;
+						 let popupText = '<span style="color:blue;"><b>' + jObj.speed.toString() + ' km/h</b></span> <span style="color:maroon;">' + jObj.t + '</span> ' + jObj.d + ' <b>' + nme + '</b>';
+						 if (marker == null)
 						 {
-							try
-							{
-								let devices = data.devices;
-								let markers = [];
-								for (let i = 0; i < devices.length; i++)
-									for (j = 0; j < devices[i].sensors.length; j++)
-									{
-										if (devices[i].sensors[j].type != 1 && devices[i].sensors[j].type != 2) continue;
-										let title = devices[i].sensors[j].value + devices[i].sensors[j].unit + ' (' + devices[i].sensors[j].name + ')';
-										let mIcon = devices[i].sensors[j].type == 2 ? humiIcon : tempIcon;
-										let tMarker = L.marker([devices[i].lat,devices[i].lon], { title: title, clickable: true, draggable: false, icon: mIcon, });
-										tMarker.bindPopup(title);
-										markers.push(tMarker);
-									};
-								if (markers.length > 0)
+							 map.setView(lstpos, 14);	
+							 var carIcon = L.icon({ iconUrl: 'icons/car.png', iconSize: [32, 32],iconAnchor: [16,  16] });
+							 var tempIcon = L.icon({ iconUrl: 'icons/temperature.png', iconSize: [32, 32],iconAnchor: [16,  16] });
+							 var humiIcon = L.icon({ iconUrl: 'icons/humidity.png', iconSize: [32, 32],iconAnchor: [16,  16] });
+							 var markerOptions = { title: nme == who ? "Location" : nme, clickable: true, draggable: false, icon: carIcon, rotationAngle: jObj.azimuth - 90, };
+							 marker = L.marker(lstpos, markerOptions);
+							 marker.bindPopup(popupText); // .openPopup();
+							 marker.addTo(map);
+							 control.addOverlay(marker, nme + ' (CAR)');						 						
+						 }
+						 else 
+						 {
+							 marker.options.rotationAngle = jObj.azimuth - 90;
+							 marker.setLatLng(lstpos); 
+							 marker.setPopupContent(popupText); // .openPopup();
+						 };
+						 $('#top')[0].innerHTML = (popupText);
+						 if (hotlineLayer != null) hotlineLayer.addLatLng([jObj.lat, jObj.lng, jObj.speed]);
+
+						 // narodmon
+						 let dst = getDistance(lstpos.lat, lstpos.lng, wthpos[0], wthpos[1]);
+						 if (dst > 5.5)
+						 { 
+							 let nmurl = 'http://narodmon.ru/api/sensorsNearby?lat='+lstpos.lat+'&lng='+lstpos.lng+'&radius=10&types=1,2&uuid=ab4ec47e07ba86074d59f6b7d86fafff&api_key=k69KecaSFegvV&lang=ru';
+							 nmurl = 'https://driver-updater.com/api/v1/front/proxyquery/?rnd='+Math.random()+'&My-Proxy-Query=' + btoa(nmurl);	
+							 $.getJSON(nmurl, function (data) 
+							 {
+								try
 								{
-									wthpos = [lstpos.lat, lstpos.lng];
-									if (narodmon == null)
+									let devices = data.devices;
+									let markers = [];
+									for (let i = 0; i < devices.length; i++)
+										for (j = 0; j < devices[i].sensors.length; j++)
+										{
+											if (devices[i].sensors[j].type != 1 && devices[i].sensors[j].type != 2) continue;
+											let title = devices[i].sensors[j].value + devices[i].sensors[j].unit + ' (' + devices[i].sensors[j].name + ')';
+											let mIcon = devices[i].sensors[j].type == 2 ? humiIcon : tempIcon;
+											let tMarker = L.marker([devices[i].lat,devices[i].lon], { title: title, clickable: true, draggable: false, icon: mIcon, });
+											tMarker.bindPopup(title);
+											markers.push(tMarker);
+										};
+									if (markers.length > 0)
 									{
-										narodmon = L.layerGroup(markers);
-										marker.addTo(narodmon);
-										control.addOverlay(narodmon, 'Weather (Pogoda)');
-									}
-									else 
-										for (let k = 0; k < markers.length; k++)
-											narodmon.addLayer(markers[k]);
-								};
-							} catch (e) {};
-						 });
+										wthpos = [lstpos.lat, lstpos.lng];
+										if (narodmon == null)
+										{
+											narodmon = L.layerGroup(markers);
+											marker.addTo(narodmon);
+											control.addOverlay(narodmon, 'Weather (Pogoda)');
+										}
+										else 
+											for (let k = 0; k < markers.length; k++)
+												narodmon.addLayer(markers[k]);
+									};
+								} catch (e) {};
+							 });
+						};
+					}
+					else
+					{
+						let popupText = '<span style="color:blue;"><b>' + jObj.speed.toString() + ' km/h</b></span> <span style="color:maroon;">' + jObj.t + '</span> ' + jObj.d + ' <b>' + nme + '</b>';
+						popupText += '</br><span style="font-size:11px;">(Updated '+(new Date()).toISOString()+')</span>';
+						$('#top')[0].innerHTML = (popupText);
 					};
 				});
 			};
