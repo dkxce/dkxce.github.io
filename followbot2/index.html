@@ -18,7 +18,7 @@
 </head>
 <body>
 	<div id="map"></div>
-	<div id="top"></div>
+	<div id="top" onclick="topclick();"></div>
 	<script>
 		// icons: https://www.flaticon.com/free-icons/temperature
 		
@@ -65,7 +65,7 @@
 					  "Google (Traffic)": GoogleTrafficLayer,				  
 				  };
 		L.control.layers(basemaps, overlays, { collapsed: true }).addTo(map);		
-		var control = L.control.layers(null, null, { collapsed: false }).addTo(map);
+		var control = L.control.layers(null, null, { collapsed: true }).addTo(map);
 			
 		var kmz = L.kmzLayer().addTo(map); // https://github.com/Raruto/leaflet-kmz
 		kmz.on('load', function(e) {
@@ -244,6 +244,11 @@
 			};
 		}
 		catch (e) {};
+		
+		var topclick = function()
+		{
+			try { window.Telegram.WebApp.showPopup({'message': $('#top')[0].innerHTML}); } catch (e) {};
+		};
 	</script>
 </body>
 </html>
