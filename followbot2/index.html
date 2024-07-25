@@ -239,16 +239,14 @@
 				window.Telegram.WebApp.BackButton.onClick(() => window.Telegram.WebApp.close());
 				
 				window.Telegram.WebApp.MainButton.setText('Открыть в браузере');
+				window.Telegram.WebApp.MainButton.color = '#FFFFFF';
+				window.Telegram.WebApp.MainButton.textColor = '#000000';
 				window.Telegram.WebApp.MainButton.show();
 				window.Telegram.WebApp.MainButton.onClick(() => window.Telegram.WebApp.openLink(window.location.href, try_instant_view = false));				
 			};
 		}
-		catch (e) {};
-		
-		var topclick = function()
-		{
-			try { window.Telegram.WebApp.showPopup({'message': $('#top')[0].innerHTML}); } catch (e) {};
-		};
+		catch (e) {};		
+		var topclick = function(){};
 	</script>
 </body>
 </html>
