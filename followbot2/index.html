@@ -1,6 +1,7 @@
 <html>
 <head>
 	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+	<meta charset="utf-8">
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 	<script src="js/leaflet.js"></script>
 	<script src="js/coords.js"></script>
@@ -14,6 +15,17 @@
 		body { padding: 0 0 0 0; margin: 0px; }
 		#map {width: 100%; height: 100%; padding: 0px; margin: 0px; }
 		#top {width: 400px; height:24px; position: absolute; left: 70px; top: 8px; z-index: 1001; font-weight: bold; }
+		.leaflet-div-icon {
+			position: relative;
+			top: 24px;
+			left: -32px;
+			border: dashed 1px white;
+			border-radius: 5px;
+			width: 70px;
+			text-align: center;
+			background: rgba(255,255,0,0.2);
+			font-weight: bold;
+		}
 	</style>
 </head>
 <body>
@@ -74,11 +86,8 @@
 			control.addOverlay(e.layer, e.name);
 		});		
 			
-		var marker = null;
-		var narodmon = null;
-		var hotlineLayer = null;
-		var lstpos = null;
-		var lstspd = 0;
+		var marker = null, textMarker = null, narodmon = null, hotlineLayer = null, lstpos = null;
+		var lstspd = 0, ttlDst = 0;
 		var wthpos = [0,0];
 		const params = new Proxy(new URLSearchParams(window.location.search), { get: (searchParams, prop) => searchParams.get(prop), });			
 		var who = params.who != null ? params.who : window.location.hash.substr(1);	
@@ -94,26 +103,46 @@
 				$.getJSON(url, function (data) 
 				{
 					 var jObj = JSON.parse(data.contents)[0];
+					 let moreText = '<table><tr style="font-size:10px;"><td>Параметр</td><td>Значение</td></tr>';
+					 for (const [key, value] of Object.entries(jObj)) 
+					 {
+						const fields = {"lat": "Широта (&deg;)", "lng": "Долгота (&deg;)", "speed": "Скорость (км/ч)", "azimuth": "Направление (&deg;)", "d": "Дата", "t": "Время", "altitude (м)": "Высота"};
+						if (key in fields) moreText += '<tr><td>' + fields[key] + ':</td><td><b>' + value + '</b></td></tr>';
+					 };					 
+					 moreText += '</table>';
 					 if (lstpos == null || (lstpos.lat != jObj.lat && lstpos.lat != jObj.lng))
 					 {
+						 if (lstpos != null) ttlDst += getDistance(jObj.lat, jObj.lng, lstpos.lat, lstpos.lng);
 						 lstpos = new L.LatLng(jObj.lat, jObj.lng);					 
 						 lstspd = jObj.speed;
-						 let popupText = '<span style="color:blue;"><b>' + jObj.speed.toString() + ' km/h</b></span> <span style="color:maroon;">' + jObj.t + '</span> ' + jObj.d + ' <b>' + nme + '</b>';
+						 let endText = ttlDst == 0 ? nme : ((Math.round(ttlDst*10)/10).toString() + ' km');
+						 let popupText = '<span style="color:blue;"><b>' + Math.round(jObj.speed).toString() + ' км/ч</b></span> <span style="color:maroon;">' + jObj.t + '</span> ' + jObj.d + ', <b style="color:purple;">' + endText + '</b>';
+						 moreText = moreText.replace('</table>', '<tr><td>Суточный пробег (km):</td><td><b>' + (Math.round(ttlDst*10)/10).toString() + '</b></td></tr>');
 						 if (marker == null)
 						 {
-							 map.setView(lstpos, 14);	
-							 var carIcon = L.icon({ iconUrl: 'icons/car.png', iconSize: [32, 32],iconAnchor: [16,  16] });
+							 map.setView(lstpos, 14);
+
+							 let spd =  Math.round(jObj.speed) + ' км/ч';
+							 textMarker = new L.Marker(lstpos, { icon: new L.DivIcon({ className: 'my-div-icon',  html: '<div id="textMarker" class="leaflet-div-icon">' + spd + '</div>', }) });		
+							 textMarker.bindPopup(moreText); // .openPopup();
+							 textMarker.addTo(map);
+							 control.addOverlay(textMarker, nme + ' (Text)');	
+							 
+							 var carIcon = L.icon({ iconUrl: 'icons/car.png', iconSize: [32, 32], iconAnchor: [16,  16] });
 							 var tempIcon = L.icon({ iconUrl: 'icons/temperature.png', iconSize: [32, 32],iconAnchor: [16,  16] });
 							 var humiIcon = L.icon({ iconUrl: 'icons/humidity.png', iconSize: [32, 32],iconAnchor: [16,  16] });
 							 var markerOptions = { title: nme == who ? "Location" : nme, clickable: true, draggable: false, icon: carIcon, rotationAngle: jObj.azimuth - 90, };
 							 marker = L.marker(lstpos, markerOptions);
 							 marker.bindPopup(popupText); // .openPopup();
 							 marker.addTo(map);
-							 control.addOverlay(marker, nme + ' (CAR)');						 						
+							 control.addOverlay(marker, nme + ' (CAR)');								
 						 }
 						 else 
 						 {
-							 marker.options.rotationAngle = jObj.azimuth - 90;
+							 $('#textMarker')[0].innerHTML = Math.round(jObj.speed) + ' км/ч';
+							 textMarker.setLatLng(lstpos); 
+							 textMarker.setPopupContent(moreText); // .openPopup();
+							 marker.options.rotationAngle = jObj.azimuth - 90;							 
 							 marker.setLatLng(lstpos); 
 							 marker.setPopupContent(popupText); // .openPopup();
 							 if (document.hidden) map.setView(lstpos, 14);
@@ -162,8 +191,8 @@
 					}
 					else
 					{
-						let popupText = '<span style="color:blue;"><b>' + jObj.speed.toString() + ' km/h</b></span> <span style="color:maroon;">' + jObj.t + '</span> ' + jObj.d + ' <b>' + nme + '</b>';
-						popupText += '</br><span style="font-size:11px;">(Updated '+(new Date()).toISOString()+')</span>';
+						let popupText = '<span style="color:blue;"><b>' + Math.round(jObj.speed).toString() + ' км/ч</b></span> <span style="color:maroon;">' + jObj.t + '</span> ' + jObj.d + ' <b>' + nme + '</b>';
+						popupText += '<br/><span style="font-size:11px;">(Updated '+(new Date()).toISOString()+')</span>';
 						$('#top')[0].innerHTML = (popupText);
 					};
 				});
@@ -181,16 +210,20 @@
 					try
 					{
 						let jObjs = data; // JSON.parse(data.contents);
+						ttlDst = 0;
 						if (jObjs.length > 1)
 						{
 							let coords = [];
 							let lst = null;
 							for (let i = 0; i < jObjs.length; i++) 
 							{
+								if (i > 0) ttlDst += getDistance(jObjs[i].lat,jObjs[i].lng, jObjs[i-1].lat,jObjs[i-1].lng);
 								coords.push([jObjs[i].lat,jObjs[i].lng,jObjs[i].speed]);
 								lst = [jObjs[i].lat,jObjs[i].lng];
 							};
 							coords.push([lstpos.lat,lstpos.lng,lstspd]);
+							ttlDst += getDistance(lstpos.lat,lstpos.lng, jObjs[jObjs.length-1].lat,jObjs[jObjs.length-1].lng);
+							$('#top')[0].innerHTML = $('#top')[0].innerHTML.replace(nme, ((Math.round(ttlDst*10)/10).toString() + ' km'));
 							
 							hotlineLayer = L.hotline(coords, { min: 0, max: 150,
 							   palette: { 0.0: '#FF0000', 0.25: '#FFFF00', 0.45: '#00FF00', 0.6: '#C0FF00', 0.75: '#A2D2FF', 0.9: '#BDE0FE', 1.0: '#EDF2F4' },
