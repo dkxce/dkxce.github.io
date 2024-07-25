@@ -228,14 +228,15 @@
 			return d;
 		};	
 		
+		// Telegram Mini App
 		try
 		{
-			alert(window.Telegram.WebApp.initData);
-			alert(window.Telegram.WebApp.version);
-			alert(window.Telegram.WebApp.platform);
-			alert(window.Telegram.WebApp.isExpanded);
-			window.Telegram.WebApp.BackButton.show();
-			window.Telegram.WebApp.MainButton.show();
+			if (window.Telegram.WebApp.initData != '')
+			{
+				window.Telegram.WebApp.MainButton.setText('Открыть в браузере');
+				window.Telegram.WebApp.MainButton.show();
+				window.Telegram.WebApp.MainButton.onClick(() => window.Telegram.WebApp.openLink(window.location.href));				
+			};
 		}
 		catch (e) {};
 	</script>
