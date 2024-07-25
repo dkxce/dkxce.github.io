@@ -233,6 +233,8 @@
 		{
 			if (window.Telegram.WebApp.initData != '')
 			{
+				window.Telegram.WebApp.BackButton.show();
+				window.Telegram.WebApp.BackButton.onClick(() => window.Telegram.WebApp.close());	
 				window.Telegram.WebApp.MainButton.setText('Открыть в браузере');
 				window.Telegram.WebApp.MainButton.show();
 				window.Telegram.WebApp.MainButton.onClick(() => window.Telegram.WebApp.openLink(window.location.href));				
