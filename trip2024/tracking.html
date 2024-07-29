@@ -34,11 +34,7 @@
 </head>
 <body>
 	<div id="map"></div>
-	<div id="top">
-		<a href="Boguchar.html">Boguchar</a> | 
-		<a href="Djubga.html">Djubga</a> |
-		<a href="tracking.html">Tracking</a>
-	</div>
+	<div id="top"></div>
 	<script>
 		var tiles = L.tileLayer('https://{s}.tile.osm.org/{z}/{x}/{y}.png');
 		var map = L.map('map', {layers: [tiles], scrollWheelZoom: true, dragging: true, tap: false });		
@@ -112,6 +108,42 @@
 		kmz.load('kmz/Veloradar.kmz');
 		kmz.load('kmz/gfisht.kmz');
 		kmz.load('kmz/Shaumyan.kmz');
+		
+		var carIcon = L.icon({ iconUrl: 'icons/car.png', iconSize: [32, 32], iconAnchor: [16,  16] });
+		var markerOptions = { title: 'I am', clickable: true, draggable: false, icon: carIcon, rotationAngle: 0, };
+		var mypos = null;
+		var follow = true;
+		if ("geolocation" in navigator) 
+		{
+			var getPos = function() 
+			{
+				navigator.geolocation.getCurrentPosition((position) => 
+				{
+				  if (mypos == null)
+				  {
+					mypos = L.marker([position.coords.latitude,position.coords.longitude], markerOptions);
+					mypos.addTo(map);
+					control.addOverlay(mypos, 'I am (Navigate)');					
+					map.setView(new L.LatLng(position.coords.latitude,position.coords.longitude), map.getZoom());					
+					$('.leaflet-control-layers-selector').change(function() {
+						if ($(this).parent().text().includes('I am')) 
+						{
+							follow = $(this).prop('checked');
+							if (follow) map.setView(mypos.getLatLng());
+						};
+					});
+				  }
+				  else
+				  {
+				    if (Number.isNaN(position.coords.heading)) mypos.options.rotationAngle = position.coords.heading - 90;
+					mypos.setLatLng([position.coords.latitude,position.coords.longitude]); 
+					if (follow) map.setView(new L.LatLng(position.coords.latitude,position.coords.longitude), map.getZoom());						
+				  };
+				});
+				setTimeout(getPos, 2000);
+			};
+			getPos();
+		};
 	</script>
 </body>
 </html>
