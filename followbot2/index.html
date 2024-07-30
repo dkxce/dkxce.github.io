@@ -28,6 +28,13 @@
 			background: rgba(255,255,0,0.2);
 			font-weight: bold;
 		}
+		.aprs-icon { 
+			position: relative;
+			top: 12px; left: -12px; width: 24px; height: 24px;
+			background: url('icons/aprs-symbols-24-0.png');
+			color: white;
+			font-weight: bold; text-align: center; vertical-align: middle; font-size: 14px; padding-left: 0.5px; padding-top: 1px;
+		}
 		table { font-size: 13	px; }
 	</style>
 </head>
@@ -39,7 +46,7 @@
 		
 		var tiles = L.tileLayer('https://{s}.tile.osm.org/{z}/{x}/{y}.png');
 		var map = L.map('map', {layers: [tiles], scrollWheelZoom: true, dragging: true, tap: false });		
-		map.setView(new L.LatLng(50.55,37.55), 8);		
+		map.setView(new L.LatLng(50.55,37.55), 8);
 		
 		var osmgerman = L.tileLayer('http://{s}.tile.openstreetmap.de/tiles/osmde/{z}/{x}/{y}.png', { maxZoom: 17, attribution: 'Maps &copy; <a href="http://openstreetmap.org">OSM</a>', subdomains: ['a','b','c'] });		
 		var osmhot = L.tileLayer('http://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', { maxZoom: 17, attribution: 'Maps &copy; <a href="http://openstreetmap.org">OSM</a>', subdomains: ['a','b','c'] });		
@@ -314,6 +321,98 @@
 			txtMarkerDopText = '<br/><b style="color:navy;" title="С момента последнего наблюдения">+' + dst + ' km</b>';
 			if (!$('#textMarker')[0].innerHTML.includes('+')) $('#textMarker')[0].innerHTML += txtMarkerDopText;
 			// viewMarker.openPopup();
+		});
+		
+		/* APRS */
+		
+		var aprsMarkers = {};
+		var aprsLayer = L.layerGroup([]);
+		aprsLayer.addTo(map);
+		control.addOverlay(aprsLayer, 'APRS Objects');	
+		
+		var symbolToImage = function(symb)
+		{
+			var prose = 'primary';
+			var label = '';
+			if(symb.length == 2)
+			{
+				if(symb[0] == '\\') prose = 'secondary';
+				else if ((symb[0] != '/') && (("#&0>AW^_acnsuvz").indexOf(symb[1]) >= 0))
+                {
+                    prose = "secondary";
+                    label = symb[0].toString();
+					if (("#0A^cv").indexOf(symb[1]) >= 0) 
+						{ label = "<span style=\"color:black;\">" + label + "</span>"; };
+                };
+				symb = symb.substr(1);
+			};
+			var symbtable = '!"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~';						
+			var idd = symbtable.indexOf(symb);
+			if (idd < 0) idd = 14;
+			var itop =  Math.floor(idd / 16) * 24;
+			var ileft = (idd % 16) * 24;
+			return 'url(icons/'+prose+'.png) -'+ileft+'px -'+itop+'px no-repeat';
+		};
+		
+		var wsocket = null;
+		var initSocket = function()
+		{
+			wsocket = new WebSocket('wss://aprs-map.info:9001/ws');			
+			wsocket.onopen = (event) => {
+				var bnds = map.getBounds();
+				var payload = {"payload_request_type":1,"neLat":bnds._northEast.lat,"neLng":bnds._northEast.lng,"swLat":bnds._southWest.lat,"swLng":bnds._southWest.lng,"minutes":360,"time":null,"onlyLatestPacket":0};
+				try { wsocket.send(JSON.stringify(payload)); } catch (e) {};
+			};
+			wsocket.onmessage = (event) =>
+			{
+				if (event.data == null) return;
+				var data = null;
+				try { data = JSON.parse(event.data); } catch (e) { return; };
+				if (data.payload_response_type == undefined) return;
+				try
+				{
+					data = data.data;
+				}
+				catch (e) {};
+				if (typeof data != 'object') return;
+				if (!Array.isArray(data)) data = [data];
+				try
+				{
+					for (let i in data) 
+					{
+						  let value = data[i];
+						  if (value.id == undefined) continue;
+						  let key = value.station_name == undefined || value.station_name == null ? value.sender_name : value.station_name;
+						  let received = value.position_timestamp  == undefined || value.position_timestamp == null ? value.timestamp : value.position_timestamp;
+						  received = (new Date(received * 1000)).toISOString();
+						  
+						  if (aprsMarkers[key] == undefined)
+						  {
+							var bgnd = symbolToImage(value['symbol']);
+							var smb = '/\\&_%-abcdefghijklmnopqrstuvwxyz'.includes(value['symbol'][0]) ? '' : value['symbol'][0];
+							var icon = new L.DivIcon({ className: 'my-div-icon',  html: '<div class="aprs-icon" style="background:' + bgnd + ';">' + smb + '</div>', })
+							var opts = { title: key, clickable: true, draggable: false, icon: icon };
+							aprsMarkers[key] = L.marker([value.latitude,value.longitude], opts);
+							aprsMarkers[key].bindPopup('<b>' + key + '</b><small style="color:gray;"><br/>' + value['comment'] + '<br/>' + received + '</small>');
+							aprsLayer.addLayer(aprsMarkers[key]);
+						  }
+						  else
+						  {
+							aprsMarkers[key].setPopupContent('<b>' + key + '</b><small style="color:gray;"><br/>' + value['comment'] + '<br/>' + received + '</small>');
+							aprsMarkers[key].setLatLng([value.latitude,value.longitude]); 
+						  };
+					};	
+				} catch (e) {};
+			};
+			wsocket.onclose = (event) => { wsocket = null; setTimeout(initSocket, 10000); };
+			wsocket.onerror = (event) => {};
+		};
+		initSocket();
+		map.on('moveend', function() { 
+			 if (wsocket == null) return;
+			 var bnds = map.getBounds();
+			 var payload = {"payload_request_type":1,"neLat":bnds._northEast.lat,"neLng":bnds._northEast.lng,"swLat":bnds._southWest.lat,"swLng":bnds._southWest.lng,"minutes":360,"time":null,"onlyLatestPacket":0};
+			 try { wsocket.send(JSON.stringify(payload)); } catch (e) {};
 		});
 	</script>
 </body>
