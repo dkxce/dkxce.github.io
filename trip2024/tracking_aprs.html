@@ -30,11 +30,18 @@
 		body { padding: 0 0 0 0; margin: 0px; }
 		#map {width: 100%; height: 100%; padding: 0px; margin: 0px; }
 		#top {width: 400px; height:24px; position: absolute; left: 70px; top: 8px; z-index: 1001; font-weight: bold; }
+		.aprs-icon { 
+			position: relative; 
+			top: 12px; left: -12px; width: 24px; height: 24px;
+			background: url('icons/aprs-symbols-24-0.png');
+			color: white;
+			font-weight: bold; text-align: center; vertical-align: middle; font-size: 14px; padding-left: 0.5px; padding-top: 1px;
+		}
 	</style>
 </head>
 <body>
 	<div id="map"></div>
-	<div id="top"><a href="tracking_aprs.html">Tracking APRS</a></div>
+	<div id="top"><a href="tracking.html">Tracking</a></div>
 	<script>
 		var tiles = L.tileLayer('https://{s}.tile.osm.org/{z}/{x}/{y}.png');
 		var map = L.map('map', {layers: [tiles], scrollWheelZoom: true, dragging: true, tap: false });		
@@ -122,7 +129,7 @@
 				  if (mypos == null)
 				  {
 					mypos = L.marker([position.coords.latitude,position.coords.longitude], markerOptions);
-					mypos.addTo(map);
+					mypos.addTo(map).bindPopup('Me');
 					control.addOverlay(mypos, 'I am (Navigate)');					
 					map.setView(new L.LatLng(position.coords.latitude,position.coords.longitude), map.getZoom());					
 					$('.leaflet-control-layers-selector').change(function() {
@@ -144,6 +151,65 @@
 			};
 			getPos();
 		};
+		
+		var aprsMarkers = {};
+		var aprsLayer = L.layerGroup([]);
+		aprsLayer.addTo(map);
+		control.addOverlay(aprsLayer, 'APRS Objects');	
+		var getAPRS = function()
+		{
+			setTimeout(getAPRS, 10000);
+			// https://github.com/dkxce/APRSIS_2_JSON
+			$.getJSON('http://localhost:8009?rnd='+Math.random(), function (data)
+			{
+				try
+				{
+					for (const [key, value] of Object.entries(data)) 
+					{
+					  if (aprsMarkers[key] == undefined)
+					  {
+					    var bgnd = symbolToImage(value['symbol']);
+						var smb = value['symbol'].startsWith('/') || value['symbol'].startsWith('\\') ? '' : value['symbol'][0];
+					    var icon = new L.DivIcon({ className: 'my-div-icon',  html: '<div class="aprs-icon" style="background:' + bgnd + ';">' + smb + '</div>', })
+					    var opts = { title: key, clickable: true, draggable: false, icon: icon };
+						aprsMarkers[key] = L.marker([value.lat,value.lon], opts);
+						aprsMarkers[key].bindPopup('<b>' + key + '</b><small style="color:gray;"><br/>' + value['comment'] + '<br/>' + value['received'] + '</small>');
+						aprsLayer.addLayer(aprsMarkers[key]);
+					  }
+					  else
+					  {
+						aprsMarkers[key].setPopupContent('<b>' + key + '</b><small style="color:gray;"><br/>' + value['comment'] + '<br/>' + value['received'] + '</small>');
+						aprsMarkers[key].setLatLng([value.lat,value.lon]); 
+					  };
+					};	
+				} catch (e) {};
+			});
+		};
+		getAPRS();
+		
+		var symbolToImage = function(symb)
+		{
+			var prose = 'primary';
+			var label = '';
+			if(symb.length == 2)
+			{
+				if(symb[0] == '\\') prose = 'secondary';
+				else if ((symb[0] != '/') && (("#&0>AW^_acnsuvz").indexOf(symb[1]) >= 0))
+                {
+                    prose = "secondary";
+                    label = symb[0].toString();
+					if (("#0A^cv").indexOf(symb[1]) >= 0) 
+						{ label = "<span style=\"color:black;\">" + label + "</span>"; };
+                };
+				symb = symb.substr(1);
+			};
+			var symbtable = '!"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~';						
+			var idd = symbtable.indexOf(symb);
+			if (idd < 0) idd = 14;
+			var itop =  Math.floor(idd / 16) * 24;
+			var ileft = (idd % 16) * 24;
+			return 'url(icons/'+prose+'.png) -'+ileft+'px -'+itop+'px no-repeat';
+		}
 	</script>
 </body>
 </html>
