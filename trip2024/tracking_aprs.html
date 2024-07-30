@@ -41,7 +41,10 @@
 </head>
 <body>
 	<div id="map"></div>
-	<div id="top"><a href="tracking.html">Tracking</a></div>
+	<div id="top">
+		<a href="tracking.html">Tracking</a> |
+		<a href="tracking_aprs_ws.html">Tracking APRS WS</a>
+	</div>
 	<script>
 		var tiles = L.tileLayer('https://{s}.tile.osm.org/{z}/{x}/{y}.png');
 		var map = L.map('map', {layers: [tiles], scrollWheelZoom: true, dragging: true, tap: false });		
@@ -169,8 +172,8 @@
 					  if (aprsMarkers[key] == undefined)
 					  {
 					    var bgnd = symbolToImage(value['symbol']);
-						var smb = value['symbol'].startsWith('/') || value['symbol'].startsWith('\\') ? '' : value['symbol'][0];
-					    var icon = new L.DivIcon({ className: 'my-div-icon',  html: '<div class="aprs-icon" style="background:' + bgnd + ';">' + smb + '</div>', })
+						var smb = '/\\&_%-abcdefghijklmnopqrstuvwxyz'.includes(value['symbol'][0]) ? '' : value['symbol'][0];
+						var icon = new L.DivIcon({ className: 'my-div-icon',  html: '<div class="aprs-icon" style="background:' + bgnd + ';">' + smb + '</div>', })
 					    var opts = { title: key, clickable: true, draggable: false, icon: icon };
 						aprsMarkers[key] = L.marker([value.lat,value.lon], opts);
 						aprsMarkers[key].bindPopup('<b>' + key + '</b><small style="color:gray;"><br/>' + value['comment'] + '<br/>' + value['received'] + '</small>');
