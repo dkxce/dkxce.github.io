@@ -106,11 +106,11 @@
 		try { var hash = window.location.hash.substr(1); if (hash != '') kmz.load('kmz/' + hash); } catch (e) {};
 		
 		// LOAD kmz
-		kmz.load('kmz/Bike_Trips_2024.kmz');
-		kmz.load('kmz/tracks.skif4x4.ru.kmz');
-		kmz.load('kmz/Veloradar.kmz');
-		kmz.load('kmz/gfisht.kmz');
-		kmz.load('kmz/Shaumyan.kmz');
+		kmz.load('kmz/Bike_Trips_2024.kmz'+'?rnd='+Math.random());
+		kmz.load('kmz/tracks.skif4x4.ru.kmz'+'?rnd='+Math.random());
+		kmz.load('kmz/Veloradar.kmz'+'?rnd='+Math.random());
+		kmz.load('kmz/gfisht.kmz'+'?rnd='+Math.random());
+		kmz.load('kmz/Shaumyan.kmz'+'?rnd='+Math.random());
 		
 		var carIcon = L.icon({ iconUrl: 'icons/car.png', iconSize: [32, 32], iconAnchor: [16,  16] });
 		var markerOptions = { title: 'I am', clickable: true, draggable: false, icon: carIcon, rotationAngle: 0, };
