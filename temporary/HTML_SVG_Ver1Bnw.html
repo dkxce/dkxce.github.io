@@ -1,0 +1,298 @@
+<!DOCTYPE html><html><body>
+
+<table><tr>
+	<td align="center"><span><b>Ветки и теги проекта</b></span></td>
+	<td align="center"><span><b>Связанные проекты</b></span></td>
+</tr><tr>
+	<td valign="top"><div id="svg1" style="border:dotted 0px silver;"></div></td>
+	<td valign="top"><div id="svg2" style="border:dotted 0px silver;"></div></td>
+</tr></table>
+
+</body>
+
+<script type="text/javascript" attributionsrc="https://github.com/dkxce">
+
+  // SVG Branch/Tag/Projects Generator v1.0 by dkxce (https://github.com/dkxce) //
+
+  var scriptAuthor       = "https://github.com/dkxce";
+  var hrefTarget         = "_blank";
+  var blacknwhite        = true;
+  var getProjectUrl      = (_prefix) => _prefix;
+  var getBranchUrl       = (_prefix,_branch) => (_branch == null ? _prefix + '/branches' : _prefix + '/tree/' + _branch).replace('//b','/b').replace('//t','/t');  
+  var getTagsUrl         = (_prefix,_tag) => (_tag == null ? _prefix + '/tags' : _prefix + '/tree/' + _tag).replace('//t','/t');
+  var getRequiredUrl     = (_name,_urls) => (_urls !== undefined && _urls != null && _urls[_name] !== undefined ? `<a target="` + hrefTarget + `" href="` + _urls[_name] + `">` + _name + `</a>` : _name);
+  
+  // Get SVC 4 Braches & Tags
+  // _project - наименование проекта
+  // _url - ссылка на проект в репозитории
+  // _branches - массив веток
+  // _tags - массив тегов
+  // _svg_width - ширина графика
+  // _item_height - высота элемента списка
+  var svgBranchesAndTags = function(_project, _url, _branches, _tags, _svg_width, _item_height) 
+  {
+		let svg_width    = _svg_width === undefined || _svg_width == null ? 500 : _svg_width;
+		let item_height  = _item_height === undefined || _item_height == null ? 24 : _item_height;
+		let space        = 4;
+		let font_size    = Math.round(item_height/2+2) + 'px';	
+		
+		if (_branches == null) _branches = [];
+	    if (_tags == null)     _tags     = [];
+		
+		let _html = 
+			`<!-- SVG -->
+			 <svg width="` + svg_width + `" height="` + ((item_height+space)*(4+_branches.length+_tags.length)+5) + `" xmlns="http://www.w3.org/2000/svg">
+			`;		
+		_html += 
+			`<!-- Стиль -->
+			<style>
+			.project  { fill: ` + (blacknwhite ? 'white' : '#d0ffff') + `;  stroke: #a0a0a0; stroke-width: 0.2; }
+			.branches { fill: ` + (blacknwhite ? 'white' : '#f0e0ff') + `;  stroke: #a0a0a0; stroke-width: 0.2; }
+			.tags     { fill: ` + (blacknwhite ? 'white' : '#f0ffe0') + `;  stroke: #a0a0a0; stroke-width: 0.2; }
+			.branch   { fill: ` + (blacknwhite ? 'white' : '#e0e0ff') + `;  stroke: #a0a0a0; stroke-width: 0.2; }
+			.tag      { fill: ` + (blacknwhite ? 'white' : '#e0ffe0') + `;  stroke: #a0a0a0; stroke-width: 0.2; }
+			.lineb    { stroke: ` + (blacknwhite ? 'silver' : 'blue') + `;  stroke-width: 0.5; stroke-dasharray: 6, 6; }
+			.linet    { stroke: ` + (blacknwhite ? 'silver' : 'green') + `; stroke-width: 0.5; stroke-dasharray: 6, 6; }
+			.text     { font-size: ` + font_size + `; font-family: "Segoe UI", Arial, sans-serif; fill: #000000; }
+			</style>
+			`;					
+		_html += 
+			`<!-- Проект -->
+			 <rect x="20" y="20" width="` + (svg_width-45) + `" height="` + item_height + `" rx="6" ry="6" class="project"/>
+			 <text x="30" y="` + (item_height/2+25) + `" class="text" style="font-weight:bold;"><a href="` + getProjectUrl(_url) + `" target="blank">`+_project+`</a></text>
+			`;					  	  
+	    _html += 
+			`<!-- Ветки -->
+			 <g transform="translate(50, ` + (20 + item_height + space) + `)">
+			 <rect x="0" y="0" width="` + (svg_width-45-30) + `" height="` + item_height + `" rx="6" ry="6" class="branches"/>
+			 <text x="` + (item_height) + `" y="` + (item_height/2+5) + `" class="text"><a target="` + hrefTarget + `" href="` + getBranchUrl(_url,null) +  `">Ветки:</a></text>
+			 `;			
+	    {
+			_html += 
+				`<!-- Иконка -->
+				<g transform="translate(4,` + (item_height-space/2+1) + `) scale(` + (item_height/700) + `,-` + (item_height/700) + `)">
+				<path d="M151 573 c-11 -10 -24 -32 -27 -50 -5 -26 -1 -37 20 -58 25 -25 26
+				-31 26 -133 0 -95 -2 -110 -20 -124 -51 -45 -26 -120 43 -126 71 -6 104 72 52
+				124 -42 42 -34 54 40 54 83 0 119 18 135 65 7 20 23 47 36 60 31 31 31 69 -1
+				100 -31 32 -74 33 -103 2 -29 -31 -28 -72 3 -103 14 -14 25 -31 25 -39 0 -26
+				-42 -45 -102 -45 l-58 0 0 71 c0 64 3 73 25 91 33 26 33 71 0 103 -28 29 -64
+				32 -94 8z" fill="#222222" />
+				</g>
+				`;
+			_html += 
+				`<!-- Линии к веткам от проектов -->
+				<line x1="-15" y1="0" x2="-15" y2="` + (item_height / 2) + `" class="lineb"/>
+				<line x1="-15" y1="` + (item_height / 2) + `" x2="-2" y2="` + (item_height / 2) + `" class="lineb"/>
+				`;
+					
+			// Список веток
+			for(let i = 0; i < _branches.length; i++)
+			{
+				_html += 
+					`<g transform="translate(30, ` + (item_height+space)*(i+1) + `)">
+					<rect x="0" y="0" width="` + (svg_width-45-60) + `" height="` + item_height + `" rx="6" ry="6" class="branch"/>
+					<text x="10" y="` + (item_height/2+5) + `" class="text"><a target="` + hrefTarget + `" href="` + getBranchUrl(_url,_branches[i]) +  `">`+_branches[i]+`</a></text>
+					</g>
+					`;
+				if (i == 0) 
+				{
+					_html += 
+						`<line x1="15" y1="` + (item_height+space) + `" x2="15" y2="` + (1.5*(item_height+space)) + `" class="lineb"/>
+						 <line x1="15" y1="` + (1.5*(item_height+space)) + `" x2="28" y2="` + (1.5*(item_height+space)) + `" class="lineb"/>`;
+				} else {
+					_html += 
+						`<line x1="15" y1="` + ((i+0.5)*(item_height+space)) + `" x2="15" y2="` + ((i+1.5)*(item_height+space)) + `" class="lineb"/>
+						 <line x1="15" y1="` + ((i+1.5)*(item_height+space)) + `" x2="28" y2="` + ((i+1.5)*(item_height+space)) + `" class="lineb"/>`;
+				};
+			};	   
+	   }; 
+	   _html +=  '</g>';
+	  	  
+	   _html += 
+				`<!-- Теги -->
+			    <g transform="translate(50, ` + (20 + ((item_height+space)*(2+_branches.length))) + `)">
+				<rect x="0" y="0" width="` + (svg_width-45-30) + `" height="` + item_height + `" rx="6" ry="6" class="tags"/>
+				<text x="` + (item_height) + `" y="` + (item_height/2+5) + `" class="text"><a target="` + hrefTarget + `" href="` + getTagsUrl(_url,null) +  `">Теги:</a></text>
+				`;
+	   {
+		   _html += 
+				`<!-- Иконка -->
+				<g transform="translate(0,` + (item_height-space/2+1) + `) scale(` + (item_height/280) + `,-` + (item_height/280) + `)">
+				fill="#000000" stroke="none">
+				<path d="M70 167 c0 -37 6 -48 43 -85 23 -23 47 -42 53 -42 12 0 74 62 74 75
+				0 5 -19 29 -42 52 -37 37 -48 43 -85 43 l-43 0 0 -43z" fill="#222222" />
+				</g>
+				`;
+		   _html += 
+				`<!-- Линии к тегам от проектов -->
+				<line x1="-15" y1="-` + (item_height*(1+_branches.length)) + `" x2="-15" y2="` + (item_height / 2) + `" class="linet"/>
+				<line x1="-15" y1="` + (item_height / 2) + `" x2="-2" y2="` + (item_height / 2) + `" class="linet"/>
+				`;
+		   // Список тегов
+		   for(let i = 0; i < _tags.length; i++)
+		   {
+				_html += 
+					`<g transform="translate(30, ` + (item_height+space)*(i+1) + `)">
+					<rect x="0" y="0" width="` + (svg_width-45-60) + `" height="` + item_height + `" rx="6" ry="6" class="tag"/>
+					<text x="10" y="` + (item_height/2+5) + `" class="text"><a target="` + hrefTarget + `" href="` + getTagsUrl(_url,_tags[i]) +  `">`+_tags[i]+`</a></text>
+					</g>
+					`;
+				if (i == 0) 
+				{
+					_html += 
+						`<line x1="15" y1="` + (item_height+space) + `" x2="15" y2="` + (1.5*(item_height+space)) + `" class="linet"/>
+						 <line x1="15" y1="` + (1.5*(item_height+space)) + `" x2="28" y2="` + (1.5*(item_height+space)) + `" class="linet"/>`;
+				} else {
+					_html += 
+						`<line x1="15" y1="` + ((i+0.5)*(item_height+space)) + `" x2="15" y2="` + ((i+1.5)*(item_height+space)) + `" class="linet"/>
+						 <line x1="15" y1="` + ((i+1.5)*(item_height+space)) + `" x2="28" y2="` + ((i+1.5)*(item_height+space)) + `" class="linet"/>`;
+				};
+		   };
+	   }; 
+	_html += '</g>';
+	_html += '</svg>';	  
+	return _html;
+  };
+  
+  // Get SVC 4 Related Projects
+  // _project - наименование проекта
+  // _url - ссылка на проект в репозитории
+  // _requires - словарь связанных проектов
+  // _urls - словарь ссылок на свяанные проекты
+  // _svg_width - ширина графика
+  // _item_height - высота элемента списка
+  var svgRequiredProjects = function(_project, _url, _requires, _urls, _svg_width, _item_height)
+  {
+		let svg_width    = _svg_width === undefined || _svg_width == null ? 500 : _svg_width;
+		let item_height  = _item_height === undefined || _item_height == null ? 24 : _item_height;
+		let space        = 4;
+		let font_size    = Math.round(item_height/2+2) + 'px';
+
+		if (_requires == null) _requires = {};
+		
+		let x = 0;
+		let calc = function(o) { 
+			let res = 0;
+			for (const [k, v] of Object.entries(o)) {
+				if (k == '@' || k == '' || k == '#' || k == '_') continue;
+				res++;
+				if(v != null && typeof(v) === 'object') res += calc(v);
+			};
+			return res;
+		};		
+		let ttl = calc(_requires) ;	
+		
+		let _html = 
+			`<!-- SVG -->
+			<svg width="` + svg_width + `" height="` + ((item_height+space)*(2+ttl)+5) + `" xmlns="http://www.w3.org/2000/svg">
+			`;
+		
+		_html += 
+			`<!-- Стиль -->
+			<style>
+			.mainproj { fill: ` + (blacknwhite ? 'white' : '#d0ffff') + `; stroke: #a0a0a0; stroke-width: 0.2; }
+			.related  { fill: ` + (blacknwhite ? 'white' : '#e0ffff') + `; stroke: #a0a0a0; stroke-width: 0.2; }   
+			.line2    { stroke: ` + (blacknwhite ? 'silver' : '#a0a0a0') + `; stroke-width: 1; stroke-dasharray: 2, 2; }
+			.text     { font-size: 14px; font-family: "Segoe UI", Arial, sans-serif; fill: #000000; }
+			</style>
+			`;
+				  
+		_html += 
+			`<!-- Проект -->
+			<rect x="20" y="20" width="` + (svg_width-45) + `" height="` + item_height + `" rx="6" ry="6" class="mainproj"/>
+			<text x="30" y="` + (item_height/2+25) + `" class="text" style="font-weight:bold;"><a href="` + getProjectUrl(_url) + `" target="blank">`+_project+`</a></text>
+			<line x1="35" y1="` + (20+item_height) + `" x2="30" y2="` + (20+item_height+10) + `" class="line2"/>
+			<line x1="35" y1="` + (20+item_height) + `" x2="40" y2="` + (20+item_height+10) + `" class="line2"/>
+			`;
+					  
+	   
+	   let root_level = 1;
+	   let cnt = 0;
+	   let makeRelatedHtml = function(o) 
+	   { 	         
+			let pkt = 0;
+			for (const [k, v] of Object.entries(o)) 
+			{			  
+				if (k == '@' || k == '' || k == '#' || k == '_') continue;
+				cnt++;						
+				let curl = getRequiredUrl(k,_urls);								
+				if(v != null) 
+				{
+					if (typeof(v) === 'string') { let map = {}; map[k] = v; curl = getRequiredUrl(k,map); };
+					if (typeof(v) === 'object') 
+					{
+						if (v['@'] !== undefined && v['@'] != null) {let map = {}; map[k] = v['@']; curl = getRequiredUrl(k,map);};
+						if (v['']  !== undefined && v['']  != null) {let map = {}; map[k] = v[''];  curl = getRequiredUrl(k,map);};
+					};
+				};
+				_html += 
+					`<g transform="translate(` + (50+(30*(root_level-1))) + `, ` + (20+(item_height+space)*(cnt)) + `)">
+					<rect x="0" y="0" width="` + (svg_width-(45+30*root_level)) + `" height="` + item_height + `" rx="6" ry="6" class="related"/>
+					<text x="10" y="` + (item_height/2+5) + `" class="text">` + curl + `</text>
+					<line x1="-15" y1="` + (-item_height*pkt) + `" x2="-15" y2="` + (0.5*item_height) + `" class="line2"/>
+					`;
+				_html += `<line x1="-15" y1="` + (0.5*item_height) + `" x2="0" y2="` + (0.5*item_height) + `" class="line2"/>`;
+				_html += `</g>`;
+				pkt++;			        
+				if(v != null && typeof(v) === 'object') 
+				{
+					root_level++;
+					makeRelatedHtml(v);
+					root_level--;
+				};			  
+			};
+		};		
+	makeRelatedHtml(_requires);	    
+	_html += '</svg>';	  
+	return _html;
+  };
+  
+</script>
+
+<script type="text/javascript" attributionsrc="https://github.com/dkxce">
+  
+  let projectName = 'Media Player Classic';
+  let projectUrl  = 'https://github.com/clsid2/mpc-hc';
+  let branches    = ['develop', 'master'];
+  let tags        = ['release_v1_6_3', 'release_v1_6_2', 'release_v1_5_0_x', 'release_v1_1_0_0'];
+  let urls        = 
+	{
+		"FFmpeg":           "https://github.com/clsid2/FFmpeg",
+		"LAVFilters":       "https://github.com/clsid2/LAVFilters",
+		"MPCVideoRenderer": "https://github.com/clsid2/MPCVideoRenderer"
+	};  
+  let req         = 
+	{
+		"FFmpeg": null,
+		"LAVFilters": 
+		{
+			"None (No Url)": null
+		},
+		"MPCVideoRenderer": 
+		{
+			"Unknown (No Url)": null,
+			"Something Else (No Url)": null,
+			"Lica (No URL)": 
+			{
+				"GBU": "http://localhost/GBU" // Url (можно так)
+			},
+			"Zero (No Url)": 
+			{
+				"": "Комментарий",
+				"Under construct": 
+				{
+					"@": "http://localhost/UnderConstruct", // Url (можно так)
+					"And one step more ...": 
+					{
+						"@": "http://localhost/NoUrl" // Url (можно так)
+					}
+				}
+			}
+		}
+	};
+	
+  document.getElementById('svg1').innerHTML = svgBranchesAndTags(projectName, projectUrl, branches, tags, 600);  
+  document.getElementById('svg2').innerHTML = svgRequiredProjects(projectName, projectUrl, req, urls, 600);
+</script>
+
+</html>
