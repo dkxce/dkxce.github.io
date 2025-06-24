@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Граф зависимостей этапов</title>
+  <script src="https://visjs.github.io/vis-network/standalone/umd/vis-network.min.js"></script> 
+  <link href="https://visjs.github.io/vis-network/styles/vis-network.css"  rel="stylesheet" />
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+    #network {
+      width: 100%;
+      height: 600px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+<h2>Граф зависимостей этапов конвейера</h2>
+<div id="network" style="position:absolute;width:400px;height:400px;"></div>
+</body>
+
+<script>
+ const stages = [
+    {'num': 1, 'name': 'Этап 1', 'run_after': null, 'status': 'succeeded'},
+    {'num': 2, 'name': 'Этап 2', 'run_after': [1], 'status': 'succeeded'},
+    {'num': 3, 'name': 'Этап 3', 'run_after': [1], 'status': 'succeeded'},
+    {'num': 4, 'name': 'Этап 4', 'run_after': [2,3], 'status': 'succeeded'},
+    {'num': 5, 'name': 'Этап 5', 'run_after': [4], 'status': 'running'},
+    {'num': 6, 'name': 'Этап 6', 'run_after': [4], 'status': 'running'},
+    {'num': 7, 'name': 'Этап 7', 'run_after': [5,6], 'status': 'created'},
+    {'num': 8, 'name': 'Этап 8', 'run_after': [6], 'status': 'created'},
+    {'num': 9, 'name': 'Этап 9', 'run_after': [7,8], 'status': 'created'},
+    {'num': 10, 'name': 'Этап 1A', 'run_after': [1], 'status': 'failed'},
+];
+
+
+  // Преобразование в формат для vis.js
+  const nodes = stages.map(stage => ({
+    id: stage.num,
+    label: stage.name,
+    title: `${stage.name}: ${stage.status || 'created'}`,
+    color: {
+      background: getStatusColor(stage.status || 'created'),
+      border: '#555'
+    }
+  }));
+
+  const edges = stages.flatMap(stage =>
+    (stage.run_after || []).map(depNum => ({
+      from: depNum,
+      to: stage.num,
+      arrows: {
+        to: true // Стрелка указывает на целевой узел
+      },
+      color: '#333'
+    }))
+  );
+
+  // Функция для цвета узла по статусу
+  function getStatusColor(status) {
+    switch (status.toLowerCase()) {
+      case 'succeeded': return '#c8e6c9'; // Зелёный
+      case 'failed': return '#ffcdd2';    // Красный
+      case 'cancelled': return '#ffe0b2'; // Оранжевый
+      case 'running': return '#fff9c4';   // Жёлтый
+      default: return '#bbbbbb';          // Синий
+    }
+  }
+
+  // Настройка и запуск графа
+  const container = document.getElementById('network');
+  const data = {
+    nodes: nodes,
+    edges: edges
+  };
+  const options = {
+    interaction: {
+      zoomView: true,
+      dragView: true
+    },
+    layout: {
+      hierarchical: {
+        enabled: true,
+        direction: 'UD', // Up -> Down
+        sortMethod: 'directed',
+        nodeSpacing: 190,
+        levelSeparation: 60
+      }
+    },
+    edges: {
+      smooth: true
+    },
+    tooltipDelay: 200
+  };
+
+  new vis.Network(container, data, options);
+</script>
+
+</html>
