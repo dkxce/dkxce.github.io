@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Граф этапов пайплайна двухстрочный</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/graph-render.css" />
+  <script src="js/text-shortener.js" defer></script>
+  <script src="js/graph-statuses.js" defer></script>
+  <script src="js/graph-render.js" defer></script>
+</head>
+<body onload="load()">
+  <div class="container">
+    <h2>Граф этапов пайплайна двухстрочный</h2>
+    <div class="align-controls">
+	  Выравнивание:
+      <a href="#" data-align="left" class="align-link">Слева</a> |
+      <a href="#" data-align="middle" class="align-link active">Центр</a> |
+      <a href="#" data-align="right" class="align-link">Справа</a>
+	  <br/>
+	  Наложение стрелок:
+      <a href="#" data-align="0" class="arrow-link">Наложение</a> |
+      <a href="#" data-align="12" class="arrow-link">Отступы</a>
+	  <br/>
+	  Цвет стрелок:
+	  <a href="#" data-align="single" class="color-link">Монохром</a> |
+	  <a href="#" data-align="random" class="color-link">Рандом</a> |
+	  <a href="#" data-align="status" class="color-link">Статус</a>
+    </div>
+    <div class="graph" id="graph"></div>
+  </div>
+</body>
+<script>    
+	let graphAlign = 'middle';
+	
+	// === Данные этапов ===
+	const stages = [
+	  {'num': 1, 'name': 'sync', 'run_after': null, 'status': 'draft'},
+	  {'num': 2, 'name': 'preflight', 'run_after': [1], 'status': 'cancelled'},
+	  {'num': 3, 'name': 'Stage name in 2 lines for example', 'run_after': [1], 'status': 'created'},
+	  {'num': 4, 'name': 'prepare', 'run_after': [2,3], 'status': 'success'},
+	  {'num': 5, 'name': 'test-frontend', 'run_after': [4], 'status': 'running'},
+	  {'num': 6, 'name': 'test', 'run_after': [4], 'status': 'pending'},
+	  {'num': 7, 'name': 'Stage name long ... lorem ipsum dolor sit', 'run_after': [5,6], 'status': 'failed'},
+	  {'num': 8, 'name': 'test-frontend', 'run_after': [6], 'status': 'skipped'},
+	  {'num': 9, 'name': 'post-test', 'run_after': [8], 'status': 'manual'},
+	  {'num': 10, 'name': 'Stagename', 'run_after': [1], 'status': 'alert'},
+	  {'num': 12, 'name': 'Parallel Task A', 'run_after': [4,5], 'status': 'success'},
+	  {'num': 13, 'name': 'Final Check', 'run_after': [1,10], 'status': 'created'},
+	];
+	
+	// === Первичная отрисовка ===
+	function load() { renderGraph(graphAlign); }
+	
+	// === Управление выравниванием ===
+	document.addEventListener('DOMContentLoaded', () => {
+	  document.querySelectorAll('.align-link').forEach(link => {
+		link.addEventListener('click', (e) => {
+		  e.preventDefault();
+		  graphAlign = e.target.getAttribute('data-align');
+		  document.querySelectorAll('.align-link').forEach(a => a.classList.remove('active'));
+		  e.target.classList.add('active');
+		  renderGraph(graphAlign);
+		});
+	  });  
+	});
+	
+	// === Управление наложением стрелок ===
+	document.addEventListener('DOMContentLoaded', () => {
+	  document.querySelectorAll('.arrow-link').forEach(link => {
+		link.addEventListener('click', (e) => {
+		  e.preventDefault();
+		  arrowSpacing = e.target.getAttribute('data-align');
+		  renderGraph(graphAlign);
+		});
+	  });  
+	});
+	
+	// === Управление цветом стрелок ===
+	document.addEventListener('DOMContentLoaded', () => {
+	  document.querySelectorAll('.color-link').forEach(link => {
+		link.addEventListener('click', (e) => {
+		  e.preventDefault();
+		  arrowRandomColor = e.target.getAttribute('data-align');
+		  renderGraph(graphAlign);
+		});
+	  });  
+	});
+</script>
+</html>
