@@ -1,0 +1,1418 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+	<meta charset="UTF-8">
+	<meta name="author" content="https://github.com/dkxce">
+	<link rel="author" href="https://github.com/dkxce">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>&copy; dkxce simple js tile map</title>
+	<style>
+		* { margin: 0; padding: 0; box-sizing: border-box; }
+		body { display: flex; justify-content: center; align-items: center; height: 100vh; background: #1a1a1a; font-family: system-ui, -apple-system, sans-serif; }
+		#map-container { width:100%; height:100%; position: relative; overflow: hidden; border: 0px solid #444; background: #aaccee; cursor: grab; user-select: none; -webkit-user-select: none; transform: translate3d(0, 0, 0); backface-visibility: hidden; }	  
+
+		.tile { position: absolute; pointer-events: none; will-change: left, top; image-rendering: -webkit-optimize-contrast; image-rendering: auto; -webkit-user-select: none; -moz-user-select: none; user-select: none; -webkit-user-drag: none; -webkit-transition: none; -moz-transition: none; -o-transition: none; transition: none; }	  
+		.marker-2d { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 4px; pointer-events: auto; cursor: pointer; z-index: 10; transition: transform 0.2s ease, opacity 0.2s ease; }
+		.marker-2d:hover { transform: translate(-50%, -50%) scale(1.08); z-index: 15; }
+		.marker-2d:active { transform: translate(-50%, -50%) scale(0.95); }
+		.marker-2d__label { background: rgba(0, 0, 0, 0.95); color: #eee; font: 600 12px/1.4 system-ui, sans-serif; padding: 3px 8px; border-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,0.25); white-space: nowrap; text-align: center; border: 1px solid rgba(0,0,0,0.1); pointer-events: none; }
+		.marker-2d__dot { width: 18px; height: 18px; background: #e53935; border: 5px solid #000; border-radius: 50%;  box-shadow: 0 2px 5px rgba(0,0,0,0.35); pointer-events: none; }
+		.attribution { position: absolute; bottom: 4px; right: 6px; z-index: 11; font: 11px/1.2 system-ui, sans-serif; color: #555; background: rgba(255,255,255,0.85); padding: 2px 5px; border-radius: 3px; pointer-events: auto; cursor: default;  }
+		.information { position: absolute; bottom: 4px; left: 6px; z-index: 11; font: 11px/1.2 system-ui, sans-serif; color: #555; background: rgba(255,255,255,0.85); padding: 2px 5px; border-radius: 3px; pointer-events: auto; cursor: default;  }
+
+		.zoom-switcher { position: absolute; top: 10px; left: 10px; z-index: 12; background: rgba(255, 255, 255, 0.95); border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); overflow: hidden; font-family: system-ui, sans-serif; }
+		.zoom-switcher button { display: block; width: 100%; padding: 2px 10px; border: none; background: #fff; cursor: pointer; font: 600 13px system-ui, sans-serif; color: #333; transition: background 0.15s, color 0.15s; }
+		.zoom-switcher button:hover { background: #f0f4f8; }
+
+		.provider-switcher { position: absolute; top: 10px; right: 10px; z-index: 12; background: rgba(255, 255, 255, 0.95); border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); overflow: hidden; font-family: system-ui, sans-serif; }
+		.provider-switcher button { display: block; width: 100%; padding: 2px 10px; border: none; background: #fff; cursor: pointer; font: 600 13px system-ui, sans-serif; color: #333; transition: background 0.15s, color 0.15s; }
+		.provider-switcher button:hover { background: #f0f4f8; }
+		.provider-switcher button.active { background: #4a90d9; color: #fff; }
+		.provider-switcher button + button { border-top: 1px solid #e0e0e0; }
+
+		.overlay-layer { position: absolute; top: 0; left: 0; z-index: 5; pointer-events: none; }
+		.kml-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 6; pointer-events: none; /* Пропускает клики сквозь KML */ }
+		.hint-layer { position: absolute; top: 0; left: 0; z-index: 20; pointer-events: none; }
+		.map-circle { position: absolute; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: auto; transition: opacity 0.2s ease; }
+		.map-circle:hover { opacity: 0.85; }
+		.map-rect { position: absolute; transform: translate(-50%, -50%); pointer-events: auto; transition: opacity 0.2s ease; box-sizing: border-box; }
+		.map-rect:hover { opacity: 0.85; }		
+		.map-icon { position: absolute; transform: translate(-50%, -50%); /* Центр иконки ровно на координатах */ pointer-events: auto; cursor: pointer; z-index: 8; transition: transform 0.2s ease, filter 0.2s ease; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.25)); }
+		.map-icon:hover { transform: translate(-50%, -50%) scale(1.15); filter: drop-shadow(0 3px 5px rgba(0,0,0,0.4)); z-index: 9; }
+		.map-icon:active { transform: translate(-50%, -50%) scale(0.95); }
+		.map-hint { position: absolute; transform: translate(-50%, -100%); pointer-events: auto; z-index: 20; transition: opacity 0.2s ease, transform 0.2s ease; }
+	    .map-hint__bubble { background: #fff; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2), 0 1px 3px rgba(0,0,0,0.1); padding: 10px 14px; min-width: 120px; max-width: 280px; position: relative; font: 13px/1.4 system-ui, sans-serif; color: #333; border: 1px solid rgba(0,0,0,0.08); }
+	    .map-hint__bubble::after { content: ''; position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); border-left: 8px solid transparent; border-right: 8px solid transparent; border-top: 8px solid #fff; }
+	    .map-hint__bubble::before { content: ''; position: absolute; bottom: -9px; left: 50%; transform: translateX(-50%); border-left: 9px solid transparent; border-right: 9px solid transparent; border-top: 9px solid rgba(0,0,0,0.08); }
+	    .map-hint__close { position: absolute; top: 6px; right: 6px; background: none; border: none; cursor: pointer; font-size: 18px; line-height: 1; color: #999; padding: 0 4px; border-radius: 4px; transition: background 0.15s, color 0.15s; }
+	    .map-hint__close:hover { background: #f0f0f0; color: #333; }
+	    .map-hint__title { font-weight: 600; font-size: 14px; margin-bottom: 4px; color: #111; min-width: 140px; }
+	    .map-hint__body { min-width: 140px; }
+	    .map-hint__close { color: #ddd; }
+	</style>
+</head>
+<body>
+	<div id="map-container">
+		<div class="zoom-switcher" id="zoom-switcher"></div>
+		<div class="provider-switcher" id="provider-switcher"></div>
+		<div class="attribution" id="attribution"></div>		
+		<div class="information" id="information"></div>		
+	</div>
+</body>
+<script id="engine">  /* ========================= Движок ========================= */
+
+/* /////////////////////////////////////////////// */
+/* // https://github.com/dkxce/dkxceSimpleJsMap // */
+/* /////////////////////////////////////////////// */
+
+class SimpleTileMap {
+  
+  /** Конструктор
+	параметры вызова:
+		- lat, lon, zoom, provider
+		- markerLat, markerLon, markerText, showMarker, onMarkerClick
+		- showZoomLevels, showProviders, showInformation
+	 вспомогательные параметры:
+		- tileUrl, subdomains, ellipse, attr, minZoom, maxZoom
+	 методы:
+		- update()
+		- setCenter()
+		- getCenter()
+		- getMousePos()
+		- setTileProvider()
+		- setZoomInOut()
+	 маркер (один):
+		- setMarker()
+		- setMarkerText()
+		- setMarkerOnClick()				
+		- removeMarker()				
+		- destroy()
+	 вспомогательные методы:
+		- setTileUrl()
+		- setSubdomains()
+	 управление слоями карты:
+		- addCircle()
+		- updateCircle()		
+		- addRectangle()
+		- addRectangleByCenter()
+		- updateRectangle()
+		- addIcon()
+		- updateIcon()
+		- removeOverlay()
+		- clearOverlays()
+	 управление kml слоями:
+		- addKML()
+		- clearKML()
+	 управление хинтами:
+		- addHint()
+		- updateHint()
+		- removeHint()
+		- clearHints()
+  */
+  constructor(container, options = {}) {
+  
+	// Проверка контейнера //
+    this.container = typeof container === 'string' ? document.querySelector(container) : container;
+    if (!this.container) throw new Error('Контейнер карты не найден');
+
+    // Координаты карты //
+    this.realLat  = this.lat  = options.lat ?? 55.89; // <- Широта  WGS-84
+    this.realLon  = this.lon  = options.lon ?? 37.69; // <- Долгота WGS-84
+    this.viewZ    = this.zoom = options.zoom ?? 12;	  // <- Масштаб  3..19
+	this.mouseLat = this.realLat;
+	this.mouseLon = this.realLon;
+	
+	// Параметры тайлов, OSM по умолчанию //
+	this.tileUrl       = options.tileUrl ?? 'https://{s}.tile.osm.org/{z}/{x}/{y}.png'
+    this.subdomains    = Array.isArray(options.subdomains) ? options.subdomains : ['a', 'b', 'c'];   	
+	this.isEllipse     = options.ellipse ?? false; // EPSG:3395 (true) или EPSG:3857 (false)
+	this.attr          = options.attr ?? 'Tiles by © OSM';	
+	this.minZoom       = options.minZoom ?? 3;
+    this.maxZoom       = options.maxZoom ?? 19;
+	this.providerKey   = options.provider ?? 'OSM';
+	
+	// Параметры маркера //
+	this.markerLat     = options.markerLat ?? this.lat; // <- Широта  WGS-84
+	this.markerLon     = options.markerLon ?? this.lon; // <- Долгота WGS-84
+    this.markerText    = options.markerText ?? null;    // <- Текст или html 
+	this.showMarker    = options.showMarker ?? false;   // <- Отображение
+	this.onMarkerClick = options.onMarkerClick ?? null; // <- Обработчик клика
+		
+	// Навигационные элементы //
+	this.showZoomLevels  = options.showZoomLevels ?? false; // <- Масштаб карты 
+	this.showProviders   = options.showProviders ?? false;  // <- Провайдеры карты
+	this.showInformation = options.showInformation ?? false; // <- Информация
+
+	// Константы //
+	this.tileSize  = 256;    
+	this.attrAddit = ' (Engine by &copy; <a target="_blank" href="https://github.com/dkxce/dkxceSimpleJsMap">dkxce</a>)';
+	
+	// Copyright //
+	if (this.attr) {
+		const el = document.getElementById('attribution')
+		if(el) el.innerHTML = this.attr + this.attrAddit;
+	} else {
+		const el = document.getElementById('attribution')
+		if(el) el.innerHTML = this.attrAddit;
+	};
+
+    // Центр карты в "тайловых" координатах //
+    this.viewX = this._lonToX(this.lon, this.zoom);
+    this.viewY = this._latToY(this.lat, this.zoom);
+
+    // Состояние драга //
+    this.isDragging = false;
+    this.dragStart = { x: 0, y: 0 };
+    this.dragView = { x: 0, y: 0 };
+
+    // Детект браузера для специфичных фиксов //
+    this._isFirefox = navigator.userAgent.includes('Firefox');
+
+	// Массив оверлеев (круги, полигоны, точки, хинты) //
+    this.overlays = [];
+	this.hints = [];
+	this.kmlFeatures = [];
+    this._kmlStyles = {};
+
+	// Инициализация элементов //
+	this.markerWidth = 0;
+	this.markerHeight = 0;
+	this._initProviders();
+	this._initZoomSwitcher();
+    this._initProviderSwitcher();
+    this._initLayers();
+    this._bindEvents();    
+	this.imgs = [];
+	
+	// Определение провайдера //
+	if (this.providerKey == 'OSM'|| this.providerKey == null || this.providerKey == '' || this.providerKey == 'custom') {
+		this._activateTileProvider();
+		this.update();	
+	} else {
+		this.setTileProvider(this.providerKey);
+	}
+  }
+
+   // Инициализация провадеров //
+  _initProviders() {
+	this.TILE_PROVIDERS = {
+	  OSM: 		 	{name: 'OSM', tileUrl: 'https://{s}.tile.osm.org/{z}/{x}/{y}.png', subdomains: ['a', 'b', 'c'], attr: 'Tiles by © OSM'},
+	  OSMGerman: 	{name: 'OSM German', tileUrl: 'http://{s}.tile.openstreetmap.de/tiles/osmde/{z}/{x}/{y}.png', subdomains: ['a', 'b', 'c'], attr: 'Tiles by © OSM'},
+	  OSMHot: 		{name: 'OSM Hot', tileUrl: 'http://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', subdomains: ['a', 'b', 'c'], attr: 'Tiles by © OSM'},
+	  OpenTopoMap: 	{name: 'OpenTopoMap', tileUrl: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', subdomains: ['a', 'b', 'c'], attr: 'Tiles by © OpenTopoMap'},
+	  CycleMap: 	{name: 'CycleMap', tileUrl: 'https://{s}.tile.hosted.thunderforest.com/cycle/{z}/{x}/{y}.png', subdomains: ['a', 'b', 'c'], attr: 'Tiles by © CycleMap'},
+	  MTBMap: 		{name: 'MTBMap', tileUrl: 'https://tile.mtbmap.cz/mtbmap_tiles/{z}/{x}/{y}.png', subdomains: ['a', 'b', 'c'], attr: 'Tiles by © MTBMap'},
+	  Google: 		{name: 'Google', tileUrl: 'http://{s}.google.com/vt/lyrs=m@177000000&hl=ru&src=app&x={x}&s=&y={y}&z={z}&s=Ga', subdomains: ['mts0','mts1'], attr: 'Tiles by © Google'},
+	  DblGIS: 		{name: '2GIS', tileUrl: 'https://tile{s}.maps.2gis.com/tiles?x={x}&y={y}&z={z}&v=1.1', subdomains: ['0','1','2','3'], attr: 'Tiles by © 2GIS'},
+	  Yandex: 		{name: 'Yandex', tileUrl: 'https://core-renderer-tiles.maps.yandex.net/tiles?l=map&v=4.41.0&z={z}&x={x}&y={y}&scale=1&lang=ru_RU', ellipse: true, attr: 'Tiles by © Yandex'},
+	  YandexSat: 	{name: 'Yandex Sat', tileUrl: 'http://{s}.maps.yandex.net/tiles?l=sat&v=1.35.0&x={x}&s=&y={y}&z={z}&lang=ru-RU', subdomains: ['sat01','sat02','sat03','sat04'], ellipse: true, attr: 'Tiles by © Yandex'},
+	  ESRI: 		{name: 'ESRI', tileUrl: 'https://services.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}.png', attr: 'Tiles by © ESRI'},
+	  ESRISat: 		{name: 'ESRI Sat', tileUrl: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}.png', attr: 'Tiles by © ESRI'},
+	  ScanEx: 		{name: 'ScanEx', tileUrl: 'http://maps.kosmosnimki.ru/TileService.ashx?Request=gettile&LayerName=04C9E7CE82C34172910ACDBF8F1DF49A&apikey=7BDJ6RRTHH&crs=epsg:3857&z={z}&x={x}&y={y}', attr: 'Tiles by © ScanEx'},  
+	};
+  }
+  
+  // Инициализация зумов //
+  _initZoomSwitcher() {
+	if (!this.showZoomLevels) return;
+	
+    const switcher = document.getElementById('zoom-switcher');
+    if (!switcher) return;
+    switcher.innerHTML = '';
+    
+	const btnIn = document.createElement('button');
+      btnIn.textContent = '+';
+      btnIn.onclick = () => this.setZoomInOut(+1);
+      switcher.appendChild(btnIn);
+	const btnOut = document.createElement('button');
+      btnOut.textContent = '-';
+      btnOut.onclick = () => this.setZoomInOut(-1);
+      switcher.appendChild(btnOut);
+  }
+  
+  // Инициализация вабора провайдера //
+  _initProviderSwitcher() {
+	if (!this.showProviders) return;
+	
+    const switcher = document.getElementById('provider-switcher');
+    if (!switcher) return;
+    switcher.innerHTML = '';
+	Object.keys(this.TILE_PROVIDERS).forEach(key => {
+      const btn = document.createElement('button');
+      btn.textContent = this.TILE_PROVIDERS[key].name;
+      btn.className = key === this.providerKey ? 'active' : '';
+      btn.onclick = () => this.setTileProvider(key);
+      switcher.appendChild(btn);
+    });
+  }
+
+  // Инициализация DOM //
+  _initLayers() {
+    this.tileLayer = document.createElement('div');
+    this.tileLayer.style.position = 'absolute';
+    this.tileLayer.style.top = '0';
+    this.tileLayer.style.left = '0';
+    
+    if (this._isFirefox) {
+      this.tileLayer.style.transform = 'translateZ(0)';
+      this.tileLayer.style.backfaceVisibility = 'hidden';
+    }
+    
+    this.container.appendChild(this.tileLayer);
+	
+	this.overlayLayer = document.createElement('div');
+    this.overlayLayer.className = 'overlay-layer';
+    this.container.appendChild(this.overlayLayer);
+	
+	this.kmlLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    this.kmlLayer.setAttribute('class', 'kml-layer');
+    this.container.appendChild(this.kmlLayer);
+	
+	this.hintLayer = document.createElement('div');
+    this.hintLayer.className = 'hint-layer';
+    this.container.appendChild(this.hintLayer);
+
+    this.markerLayer = document.createElement('div');
+    this.markerLayer.style.position = 'absolute';
+    this.markerLayer.style.top = '0';
+    this.markerLayer.style.left = '0';
+    this.markerLayer.style.zIndex = '10';
+    this.container.appendChild(this.markerLayer);
+	
+	const tempDiv = document.createElement('div');
+	tempDiv.className = 'marker-2d__dot';
+	tempDiv.style.visibility = 'hidden';
+	tempDiv.style.position = 'absolute';
+	document.body.appendChild(tempDiv);
+	this.markerWidth = parseInt(window.getComputedStyle(tempDiv).width);
+	this.markerHeight = parseInt(window.getComputedStyle(tempDiv).height);
+	document.body.removeChild(tempDiv);
+  }
+
+  // Привязка событий //
+  _bindEvents() {
+    this._onMouseDown = this._onMouseDown.bind(this);
+    this._onMouseMove = this._onMouseMove.bind(this);
+    this._onMouseUp = this._onMouseUp.bind(this);
+    this._onWheel = this._onWheel.bind(this);
+
+    this.container.addEventListener('mousedown', this._onMouseDown);
+    window.addEventListener('mousemove', this._onMouseMove);
+    window.addEventListener('mouseup', this._onMouseUp);
+    this.container.addEventListener('wheel', this._onWheel, { passive: false });
+  }
+
+  // Получение рандомного поддомена карт //
+  _getRandomSubdomain() {
+    if (!this.subdomains || this.subdomains.length === 0) return '';
+    const idx = Math.floor(Math.random() * this.subdomains.length);
+    return this.subdomains[idx];
+  }
+  
+  // Получение ссылки на тайл //
+  _buildTileUrl(z, x, y) {
+    let url = this.tileUrl.replace('{z}', z).replace('{x}', x).replace('{y}', y);
+    if (url.includes('{s}') && this.subdomains?.length > 0)
+      url = url.replace('{s}', this._getRandomSubdomain());
+    return url;
+  }
+
+  // Прямое преобразования координат, проекции Web Mercator Sphere + Ellipse //
+  _lonToX(lon, z) { return (lon + 180) / 360 * (1 << z); }
+
+  _latToY(lat, z) {
+	if (this.isEllipse)
+	{
+		// EPSG:3395
+		const e = 0.0818191908426; // Эксцентриситет WGS-84
+		const latRad = lat * Math.PI / 180;
+		
+		const sinLat = Math.sin(latRad);
+		
+		// Вычисление изометрической широты для эллипсоида:
+		// ln( tan(pi/4 + lat/2) * ((1 - e*sin(lat)) / (1 + e*sin(lat)))^(e/2) )
+		const tanHalfPi = Math.tan(Math.PI / 4 + latRad / 2);
+		const ellipsoidCorrection = Math.pow((1 - e * sinLat) / (1 + e * sinLat), e / 2);
+		
+		const lnVal = Math.log(tanHalfPi * ellipsoidCorrection);
+		
+		// Нормализация в диапазон [0..1] (где 0 - Северный полюс, 1 - Южный)
+		const yNorm = 0.5 - lnVal / (2 * Math.PI);
+		
+		return yNorm * (1 << z);
+	}
+	else
+	{
+		//  EPSG:3857
+		const r = lat * Math.PI / 180;
+		return (1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2 * (1 << z);
+	};
+  }
+  
+  // Обратное преобразования координат, проекции Web Mercator Sphere + Ellipse //
+  _xToLon(x, z) { return x / (1 << z) * 360 - 180; }
+
+  _yToLat(y, z) {
+    const yNorm = y / (1 << z); // Нормализация к [0..1]
+    
+    if (this.isEllipse) {
+      // EPSG:3395
+      const e = 0.0818191908426; // Эксцентриситет WGS-84
+      const e2 = e * e;
+      
+      // Начальное приближение: сферическая формула
+      const n = Math.PI - 2 * Math.PI * yNorm;
+      let lat = (2 * Math.atan(Math.exp(n)) - Math.PI / 2) * 180 / Math.PI;
+      
+      // Метод Ньютона: 5-8 итераций достаточно для точности < 1 см
+      for (let i = 0; i < 12; i++) {
+        const latRad = lat * Math.PI / 180;
+        const sinLat = Math.sin(latRad);
+        const cosLat = Math.cos(latRad);
+        
+        // f(lat) = ln(tan(π/4 + lat/2)) + (e/2)·ln((1-e·sin)/(1+e·sin)) - (π - 2π·yNorm)
+        const tanPart = Math.tan(Math.PI / 4 + latRad / 2);
+        const ellipsoidPart = Math.pow((1 - e * sinLat) / (1 + e * sinLat), e / 2);
+        const f = Math.log(tanPart * ellipsoidPart) - (Math.PI - 2 * Math.PI * yNorm);
+        
+        // f'(lat) = sec(lat) / (1 - e²·sin²(lat))
+        const fPrime = 1 / (cosLat * (1 - e2 * sinLat * sinLat));
+        
+        const delta = f / fPrime * 180 / Math.PI; // в градусах
+        lat -= delta;
+        
+        // Ранний выход при достижении точности
+        if (Math.abs(delta) < 1e-10) break;
+      }      
+      return lat;
+    } else {
+      // EPSG:3857 (сферическая) — аналитическая формула
+      const n = Math.PI - 2 * Math.PI * yNorm;
+      const latRad = 2 * Math.atan(Math.exp(n)) - Math.PI / 2;
+      return latRad * 180 / Math.PI;
+    }
+  }
+   
+   // Метры в пиксели //
+  _metersToPixels(meters, lat, zoom) {
+    // Длина метра в проекции зависит от широты
+    const latRad = lat * Math.PI / 180;
+    const earthCircumference = 40075016.686; // экватор, метры
+    const metersPerPixel = (earthCircumference * Math.cos(latRad)) / (256 * Math.pow(2, zoom));
+    return meters / metersPerPixel;
+  }
+   
+   // Установка провайдера тайлов //
+  _setProvider(config) {	
+    this.tileUrl    = config.tileUrl ?? 'https://{s}.tile.osm.org/{z}/{x}/{y}.png'   
+    this.subdomains = Array.isArray(config.subdomains) ? config.subdomains : ['a', 'b', 'c']; 
+	this.isEllipse  = config.ellipse ?? false;
+    this.attr       = config.attr ?? 'Tiles by © OSM';
+	this.minZoom    = config.minZoom ?? 3;
+	this.maxZoom    = config.maxZoom ?? 19;	
+
+    const attrEl = document.getElementById('attribution');
+    if (this.attr) {
+		if(attrEl) attrEl.innerHTML = this.attr + this.attrAddit;
+	} else {
+		if(attrEl) attrEl.innerHTML = this.attrAddit;
+	};
+  }
+  
+  // Активация провайдера на селекторе //
+  _activateTileProvider(key) {  
+    if (!this.showProviders) return;
+	
+	if(key === undefined) 
+		Object.keys(this.TILE_PROVIDERS).forEach(el => {
+			if (this.TILE_PROVIDERS[el].tileUrl == this.tileUrl) {
+				key = el; 
+			};
+		});
+	if(key === undefined) return;
+	
+	const switcher = document.getElementById('provider-switcher');
+    if (switcher) {
+      Array.from(switcher.children).forEach((btn, i) => {
+        const keys = Object.keys(this.TILE_PROVIDERS);
+        btn.classList.toggle('active', keys[i] === key);
+      });
+    }
+  }
+
+  // Рендер тайлов //
+  _renderTiles() {
+    this.tileLayer.innerHTML = '';
+    const w = this.container.clientWidth;
+    const h = this.container.clientHeight;
+
+    const countX = Math.ceil(w / this.tileSize) + 1;
+    const countY = Math.ceil(h / this.tileSize) + 1;
+    const halfX = countX / 2;
+    const halfY = countY / 2;
+
+    let minX = Math.max(Math.floor(this.viewX - halfX), 0);
+    let maxX = Math.min(Math.ceil(this.viewX + halfX), (1 << this.viewZ) - 1);
+    let minY = Math.max(Math.floor(this.viewY - halfY), 0);
+    let maxY = Math.min(Math.ceil(this.viewY + halfY), (1 << this.viewZ) - 1);
+
+    for (let tx = minX; tx <= maxX; tx++) {
+      for (let ty = minY; ty <= maxY; ty++) {
+        const img = document.createElement('img');
+        img.className = 'tile';
+		img.setAttribute('width', this.tileSize);
+        img.setAttribute('height', this.tileSize);										 
+        img.src = this._buildTileUrl(this.viewZ, tx, ty);
+        img.alt = '';
+        img.draggable = false;
+		img.decoding = 'sync';
+        
+        // Вычисляем позицию
+        const leftPx = (tx - this.viewX) * this.tileSize + w / 2;
+        const topPx = (ty - this.viewY) * this.tileSize + h / 2;
+        
+        // ФИКС: разное округление для разных браузеров
+        if (this._isFirefox) {
+          // Firefox: bitwise-округление гарантирует целочисленные координаты
+          img.style.left = (leftPx | 0) + 'px';
+          img.style.top  = (topPx | 0) + 'px';
+          // Дополнительный атрибут для старых версий Firefox
+          img.setAttribute('mozPreserveAspectRatio', 'none');
+        } else {
+          // Chromium/Safari: стандартное округление
+          img.style.left = Math.round(leftPx) + 'px';
+          img.style.top  = Math.round(topPx) + 'px';
+        }
+        
+        img.style.width = this.tileSize + 'px';
+        img.style.height = this.tileSize + 'px';
+        
+		this.imgs.push({img:img,left:Math.round(leftPx),top:Math.round(topPx)});
+        this.tileLayer.appendChild(img);
+      }
+    }
+  }
+
+  // Рендер круга //
+  _renderCircle(circle) {
+    const w = this.container.clientWidth;
+    const h = this.container.clientHeight;
+
+    const dx = (this._lonToX(circle.lon, this.viewZ) - this.viewX) * this.tileSize;
+    const dy = (this._latToY(circle.lat, this.viewZ) - this.viewY) * this.tileSize;
+
+    const px = w / 2 + dx;
+    const py = h / 2 + dy;
+
+    // Радиус в пикселях с учётом широты
+    const radiusPx = this._metersToPixels(circle.radius, circle.lat, this.viewZ);
+
+    if (px + radiusPx < -50 || px - radiusPx > w + 50 || 
+        py + radiusPx < -80 || py - radiusPx > h + 20) {
+      if (circle.element) circle.element.remove();
+      return;
+    }	
+
+    const el = document.createElement('div');
+    el.className = 'map-circle';
+    el.id = circle.id;
+    el.style.left = px + 'px';
+    el.style.top = py + 'px';
+    el.style.width = (radiusPx * 2) + 'px';
+    el.style.height = (radiusPx * 2) + 'px';
+    el.style.background = circle.color;
+    el.style.border = `${circle.strokeWidth}px solid ${circle.stroke}`;
+    el.style.boxSizing = 'border-box';
+
+    circle.element = el;
+    this.overlayLayer.appendChild(el);
+  }
+  
+  // Рендер прямоугольника //
+  _renderRectangle(rect) {
+    const w = this.container.clientWidth;
+    const h = this.container.clientHeight;
+
+    // Координаты углов в тайловой системе
+    const x1 = this._lonToX(rect.west, this.viewZ);
+    const x2 = this._lonToX(rect.east, this.viewZ);
+    const y1 = this._latToY(rect.north, this.viewZ);
+    const y2 = this._latToY(rect.south, this.viewZ);
+
+    // Пиксельные координаты относительно центра контейнера
+    const leftPx = Math.round((x1 - this.viewX) * this.tileSize + w / 2);
+    const topPx = Math.round((y1 - this.viewY) * this.tileSize + h / 2);
+    const rightPx = Math.round((x2 - this.viewX) * this.tileSize + w / 2);
+    const bottomPx = Math.round((y2 - this.viewY) * this.tileSize + h / 2);
+
+    const px = (leftPx + rightPx) / 2;
+    const py = (topPx + bottomPx) / 2;
+    const widthPx = Math.abs(rightPx - leftPx);
+    const heightPx = Math.abs(bottomPx - topPx);
+
+    // Проверка видимости
+    if (px + widthPx/2 < -50 || px - widthPx/2 > w + 50 || 
+        py + heightPx/2 < -80 || py - heightPx/2 > h + 20) {
+      if (rect.element) rect.element.remove();
+      return;
+    }
+
+    const el = document.createElement('div');
+    el.className = 'map-rect';
+    el.id = rect.id;
+    el.style.left = px + 'px';
+    el.style.top = py + 'px';
+    el.style.width = widthPx + 'px';
+    el.style.height = heightPx + 'px';
+    el.style.background = rect.color;
+    el.style.border = `${rect.strokeWidth}px solid ${rect.stroke}`;
+    el.style.boxSizing = 'border-box';
+
+    rect.element = el;
+    this.overlayLayer.appendChild(el);
+  }
+  
+  // Рендер точек //
+  _renderIcon(icon) {
+	const w = this.container.clientWidth;
+    const h = this.container.clientHeight;
+    const dx = (this._lonToX(icon.lon, this.viewZ) - this.viewX) * this.tileSize;
+    const dy = (this._latToY(icon.lat, this.viewZ) - this.viewY) * this.tileSize;
+    const px = w / 2 + dx;
+    const py = h / 2 + dy;
+
+    if (px < -50 || px > w + 50 || py < -50 || py > h + 50) {
+      if (icon.element) icon.element.remove(); return;
+    }
+	
+    const el = document.createElement('img');
+    el.className = 'map-icon';
+    el.id = icon.id;
+    el.src = icon.iconUrl;
+    el.alt = '';
+    el.style.width = icon.size.width + 'px';
+    el.style.height = icon.size.height + 'px';
+    el.style.left = px + 'px';
+    el.style.top = py + 'px';
+    el.draggable = false;
+
+    if (typeof icon.onClick === 'function') {
+      el.addEventListener('mousedown', e => e.stopPropagation());
+      el.addEventListener('click', e => {
+        e.stopPropagation();
+        icon.onClick({
+			lat: icon.lat, 
+			lon: icon.lon,
+			zoom: this.viewZ, 
+			provider: this.providerKey,			
+			id: icon.id, 
+			element: el });
+      });
+    }
+
+    icon.element = el;
+    this.overlayLayer.appendChild(el);
+  }
+  
+  // Отрисовка слоев //
+  _updateOverlays() {
+    this.overlayLayer.innerHTML = '';
+    for (const overlay of this.overlays) {
+      if (overlay.type === 'circle') this._renderCircle(overlay);
+      if (overlay.type === 'rectangle') this._renderRectangle(overlay);
+      if (overlay.type === 'icon') this._renderIcon(overlay);
+    }
+  }
+  
+  // Преробразование стилей kml //
+  _kmlColorToCss(kmlColor) {
+    if (!kmlColor || kmlColor.length !== 8) return 'rgba(52,137,255,0.35)';
+    const a = parseInt(kmlColor.substring(0, 2), 16) / 255;
+    const b = parseInt(kmlColor.substring(2, 4), 16);
+    const g = parseInt(kmlColor.substring(4, 6), 16);
+    const r = parseInt(kmlColor.substring(6, 8), 16);
+    return `rgba(${r},${g},${b},${a.toFixed(2)})`;
+  }
+
+  // Парсинг координат kml //
+  _parseKmlCoordinates(text) {
+    return text.trim().split(/\s+/).map(pair => {
+      const [lon, lat] = pair.split(',').map(Number);
+      return {lon,lat};
+    }).filter(c => !isNaN(c.lat) && !isNaN(c.lon));
+  }
+
+  // Отрисовка kml //
+  _updateKML() {
+    this.kmlLayer.innerHTML = '';
+    if (!this.kmlFeatures.length) return;
+
+    const w = this.container.clientWidth;
+    const h = this.container.clientHeight;
+
+    for (const f of this.kmlFeatures) {
+      if (f.type === 'point') {
+	  
+        const cx = this._lonToX(f.coords[0].lon, this.viewZ);
+        const cy = this._latToY(f.coords[0].lat, this.viewZ);
+        const px = (cx - this.viewX) * this.tileSize + w / 2;
+        const py = (cy - this.viewY) * this.tileSize + h / 2;
+
+        if (f.style.iconUrl) {
+          const img = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+          img.setAttribute('href', f.style.iconUrl);
+          img.setAttribute('x', px - 16); img.setAttribute('y', py - 16);
+          img.setAttribute('width', 32); img.setAttribute('height', 32);
+          this.kmlLayer.appendChild(img);
+        } else {
+          const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          c.setAttribute('cx', px); c.setAttribute('cy', py);
+          c.setAttribute('r', f.style.strokeWidth * 1.5 || 5);
+          c.setAttribute('fill', f.style.fill); c.setAttribute('stroke', '#fff');
+          c.setAttribute('stroke-width', '1.5');
+          this.kmlLayer.appendChild(c);
+        }
+		
+      } else {
+	  
+        const pts = f.coords.map(c => {
+          const x = (this._lonToX(c.lon, this.viewZ) - this.viewX) * this.tileSize + w / 2;
+          const y = (this._latToY(c.lat, this.viewZ) - this.viewY) * this.tileSize + h / 2;
+          return `${x},${y}`;
+        });
+        if (pts.length < 2) continue;
+
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        const d = f.type === 'polygon' ? `M ${pts.join(' L ')} Z` : `M ${pts.join(' L ')}`;
+        path.setAttribute('d', d);
+        path.setAttribute('stroke', f.style.stroke);
+        path.setAttribute('stroke-width', f.style.strokeWidth);
+        path.setAttribute('fill', f.type === 'polygon' ? f.style.fill : 'none');
+        path.setAttribute('stroke-linejoin', 'round');
+        path.setAttribute('stroke-linecap', 'round');		
+        this.kmlLayer.appendChild(path);
+		
+      }
+    }
+  }
+  
+  // Отображение маркера //
+  _placeMarker() {		
+    this.markerLayer.innerHTML = '';
+	if(!this.showMarker) return;
+	if(this.markerText == null) return;
+	
+    const w = this.container.clientWidth;
+    const h = this.container.clientHeight;
+
+    // Та же формула смещения, что и у тайлов //
+    const dx = (this._lonToX(this.markerLon, this.viewZ) - this.viewX) * this.tileSize;
+    const dy = (this._latToY(this.markerLat, this.viewZ) - this.viewY) * this.tileSize;
+
+    const px = w / 2 + dx + 1;
+    const py = h / 2 + dy - this.markerHeight + 1;
+
+    // Не рендерим, если маркер далеко за пределами вьюпорта //
+    if (px < -50 || px > w + 50 || py < -80 || py > h + 20) return;
+
+    const el = document.createElement('div');
+    el.className = 'marker-2d';	
+    el.style.left = px + 'px';
+    el.style.top  = py + 'px';	
+
+    const label = document.createElement('div');
+    label.className = 'marker-2d__label';
+    label.textContent = this.markerText;
+	if(this.markerText.startsWith('<')) 
+		label.innerHTML = this.markerText.trim();		
+
+    const dot = document.createElement('div');
+    dot.className = 'marker-2d__dot';	
+
+    el.appendChild(label);
+    el.appendChild(dot);
+	el.addEventListener('mousedown', e => e.stopPropagation());
+    el.addEventListener('click', e => {
+      e.stopPropagation();
+      const data = { 
+        lat: this.markerLat, 
+        lon: this.markerLon, 
+        zoom: this.viewZ, 
+        provider: this.providerKey,
+		markerText: this.markerText,
+        element: el 
+      };      
+      if (typeof this.onMarkerClick === 'function')
+        this.onMarkerClick(data);
+      else 
+		console.log('Marker clicked:', data);
+    });
+    this.markerLayer.appendChild(el);
+  }
+
+  // Отрисовка хинта //
+  _renderHint(hint) {
+    const w = this.container.clientWidth, h = this.container.clientHeight;
+    
+    const dx = (this._lonToX(hint.lon, this.viewZ) - this.viewX) * this.tileSize;
+    const dy = (this._latToY(hint.lat, this.viewZ) - this.viewY) * this.tileSize;
+
+    const px = w / 2 + dx + hint.offset.x;
+    const py = h / 2 + dy + hint.offset.y;
+
+    if (px < -150 || px > w + 150 || py < -150 || py > h + 150) {
+      if (hint.el) hint.el.remove();
+      return;
+    }
+
+    const el = document.createElement('div');
+    el.className = 'map-hint';
+    el.id = hint.id;
+    el.style.left = px + 'px';
+    el.style.top = py + 'px';
+
+    const bubble = document.createElement('div');
+    bubble.className = 'map-hint__bubble';
+
+    let html = '';
+    html += '<div class="map-hint__title">'+(hint.title == null ? 'Нет информации' : hint.title)+'</div>';
+    if(hint.content) html += '<div class="map-hint__body">'+hint.content+'</div>';
+    html += '<button class="map-hint__close" title="Закрыть">×</button>';
+    bubble.innerHTML = html;
+
+    const closeBtn = bubble.querySelector('.map-hint__close');
+    closeBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (typeof hint.onClose === 'function') hint.onClose();
+      this.removeHint(hint.id);
+    });
+
+    bubble.addEventListener('mousedown', e => e.stopPropagation());
+    bubble.addEventListener('wheel', e => e.stopPropagation());
+
+    el.appendChild(bubble);
+    this.hintLayer.appendChild(el);
+    hint.el = el;
+  }
+
+ // Отрисовка хинтов //
+  _updateHints() {
+    this.hintLayer.innerHTML = '';
+    for (const h of this.hints) this._renderHint(h);
+  }  
+  
+  /* // Публичные методы // */
+  
+  // Обновление карты //
+  update() {
+	this.realLon = this._xToLon(this.viewX, this.viewZ);
+	this.realLat = this._yToLat(this.viewY, this.viewZ);
+    this._renderTiles();
+	this._updateOverlays();
+	this._updateKML();
+	this._updateHints();
+    this._placeMarker();
+			
+	if(this.showInformation) {
+		const el = document.getElementById('information')
+		if(el) el.innerHTML = `C ${this.realLat.toFixed(8)}/${this.realLon.toFixed(8)}`;
+	};
+  }
+
+  /** Добавление круга
+	options:
+		- lat - широта центра
+		- lon - долгота центра
+		- radius - радиус в метрах
+		- [color='rgba(66,139,202,0.25)'] - цвет заливки
+		- [stroke='rgba(66,139,202,0.8)'] - цвет обводки
+		- [strokeWidth=2] - толщина обводки
+		- [id] - уникальный ID для управления
+   */
+  addCircle(options) {
+    const {lat, lon, radius, color = 'rgba(66, 139, 202, 0.25)',
+      stroke = 'rgba(66, 139, 202, 0.8)', strokeWidth = 2,
+      id = `circle_${Date.now()}_${Math.random().toString(36).slice(2)}`
+    } = options;	
+    this.removeOverlay(id);
+    const circle = { id, type: 'circle', lat, lon, radius,
+      color, stroke, strokeWidth, element: null };
+    this._renderCircle(circle);
+    this.overlays.push(circle);
+    return id;
+  }
+
+  // Обновить круг //
+  updateCircle(id, options) {
+    const overlay = this.overlays.find(o => o.id === id && o.type === 'circle');
+    if (!overlay) return;    
+    Object.assign(overlay, options);
+    if (overlay.element) overlay.element.remove();
+    this._renderCircle(overlay);
+  }
+  
+  /** Добавление прямоугольника по координатам
+	options:
+		- north - северная граница (широта)
+		- south - южная граница (широта)
+		- east - восточная граница (долгота)
+		- west - западная граница (долгота)
+		- [color='rgba(66,139,202,0.25)'] - цвет заливки
+		- [stroke='rgba(66,139,202,0.8)'] - цвет обводки
+		- [strokeWidth=2] - толщина обводки
+		- [id] - уникальный ID для управления
+   */
+  addRectangle(options) {
+    const { north, south, east, west,
+      color = 'rgba(233, 30, 99, 0.2)',
+      stroke = 'rgba(233, 30, 99, 0.9)',
+      strokeWidth = 2,
+      id = `rect_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+	  lat = null, lon = null, widthMeters = null, heightMeters = null
+    } = options;
+
+    this.removeOverlay(id);
+
+    const rect = {
+      id, type: 'rectangle', north, south, east, west, color, stroke, strokeWidth, 
+	  lat, lon, widthMeters, heightMeters,
+	  element: null
+    };
+
+    this._renderRectangle(rect);
+    this.overlays.push(rect);
+    return id;
+  }
+
+  /** Добавление прямоугольника по центру и размерам
+	options:
+		- lat - широта центра
+		- lon - долгота центра
+		- widthMeters - ширина в метрах
+		- heightMeters - высота в метрах
+		- [color='rgba(66,139,202,0.25)'] - цвет заливки
+		- [stroke='rgba(66,139,202,0.8)'] - цвет обводки
+		- [strokeWidth=2] - толщина обводки
+		- [id] - уникальный ID для управления
+   */
+  addRectangleByCenter(options) {
+    const {
+      lat, lon, widthMeters, heightMeters,
+      color, stroke, strokeWidth, id
+    } = options;
+
+    // Приблизительный перевод метров в градусы
+    const latDegPerMeter = 1 / 111320; // ~111 км на градус широты
+    const lonDegPerMeter = 1 / (111320 * Math.cos(lat * Math.PI / 180));
+
+    return this.addRectangle({
+      north: lat + heightMeters / 2 * latDegPerMeter,
+      south: lat - heightMeters / 2 * latDegPerMeter,
+      east: lon + widthMeters / 2 * lonDegPerMeter,
+      west: lon - widthMeters / 2 * lonDegPerMeter,
+      color, stroke, strokeWidth, id,
+	  lat, lon, widthMeters, strokeWidth
+    });
+  }
+
+  // Обновить прямоугольник //
+  updateRectangle(id, options) {
+    const overlay = this.overlays.find(o => o.id === id && o.type === 'rectangle');
+    if (!overlay) return;
+	if(overlay.lat && overlay.lon)
+	{
+		const latDegPerMeter = 1 / 111320; // ~111 км на градус широты
+		const lonDegPerMeter = 1 / (111320 * Math.cos((options.lat ?? overlay.lat) * Math.PI / 180));
+		options.north = (options.lat ?? overlay.lat) + (options.heightMeters ?? overlay.heightMeters) / 2 * latDegPerMeter;
+		options.south = (options.lat ?? overlay.lat) - (options.heightMeters ?? overlay.heightMeters) / 2 * latDegPerMeter;
+		options.east = (options.lon ?? overlay.lon) + (options.widthMeters ?? overlay.widthMeters) / 2 * lonDegPerMeter;
+		options.west = (options.lon ?? overlay.lon) - (options.widthMeters ?? overlay.widthMeters) / 2 * lonDegPerMeter;
+	};	
+    Object.assign(overlay, options);
+    if (overlay.element) overlay.element.remove();
+    this._renderRectangle(overlay);
+  }
+
+  /** Добавление точки (иконки) //
+	options:
+		- lat - широта
+		- lon - долгота
+		- iconUrl - картинка
+		- [size = { width: 32, height: 32 }] - размер
+		- [id] - уникальный ID для управления
+		- [onClick] - обработчик клика
+  */
+  addIcon(options) {
+    const { lat, lon, iconUrl, size = { width: 32, height: 32 }, id = `icon_${Date.now()}`, onClick = null } = options;
+    this.removeOverlay(id);
+    const obj = { id, type: 'icon', lat, lon, iconUrl, size, onClick, element: null };
+    this._renderIcon(obj);
+    this.overlays.push(obj);
+    return id;
+  }
+  
+  // Обновление точки (иконки //
+  updateIcon(id, options) {
+	const overlay = this.overlays.find(o => o.id === id && o.type === 'icon');
+    if (!overlay) return;    
+    Object.assign(overlay, options);
+    if (overlay.element) overlay.element.remove();
+    this._renderIcon(overlay);
+  }
+
+  // Удалить оверлей (круг, прямоугольник) по ID //
+  removeOverlay(id) {
+    const idx = this.overlays.findIndex(o => o.id === id);
+    if (idx >= 0) {
+      if (this.overlays[idx].element)
+        this.overlays[idx].element.remove();
+      this.overlays.splice(idx, 1);
+    }
+  }
+
+  // Удалить все оверлеи //
+  clearOverlays() {
+    for (const overlay of this.overlays)
+      if (overlay.element) 
+		overlay.element.remove();
+    this.overlays = [];
+  }
+
+  // Установить текст маркера //
+  setMarkerText(markerText) {
+	this.showMarker = true;
+    this.markerText = markerText;
+    this._placeMarker();
+  }
+  
+  // Установить onclick маркера //
+  setMarkerOnClick(onMarkerClick) {
+	this.onMarkerClick = onMarkerClick;
+    this._placeMarker();
+  }
+
+  // Установить маркер //
+  setMarker(markerLat, markerLon, markerText = null, onMarkerClick = null) {
+	this.markerLat = markerLat;
+	this.markerLon = markerLon;
+	if(markerText != null) this.markerText = markerText;
+	if(onMarkerClick != null) this.onMarkerClick = onMarkerClick;
+    this._placeMarker();
+  }
+  
+  // Удалить маркер //
+  removeMarker() {
+    this.markerText = null;
+    this._placeMarker();
+  }
+  
+  // Добавить kml данные (xml или url) //
+  async addKML(source, replace = false) {
+    let xml = 'unknown';
+    if (typeof source === 'string' && (source.startsWith('<'))) {
+      xml = source;
+    } else {
+      const res = await fetch(source);
+      if (!res.ok) throw new Error(`KML load failed: ${res.status}`);
+      xml = await res.text();
+    }
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(xml, 'text/xml');
+    if (doc.querySelector('parsererror')) throw new Error('Invalid KML Data');
+
+    // Парсим стили //
+    if (replace) this._kmlStyles = {};
+    for (const s of doc.getElementsByTagName('Style')) {
+      const id = s.getAttribute('id');
+      if (!id) continue;
+      const l = s.querySelector('LineStyle');
+      const p = s.querySelector('PolyStyle');
+      const i = s.querySelector('IconStyle Icon href');
+      this._kmlStyles[id] = {
+        stroke: l?.querySelector('color')?.textContent ? this._kmlColorToCss(l.querySelector('color').textContent) : null,
+        strokeWidth: l?.querySelector('width')?.textContent ? Number(l.querySelector('width').textContent) : null,
+        fill: p?.querySelector('color')?.textContent ? this._kmlColorToCss(p.querySelector('color').textContent) : null,
+        iconUrl: i?.textContent || null
+      };
+    }
+
+    // Парсим Placemarks //
+    if (replace) this.kmlFeatures = [];
+	let was = this.kmlFeatures.length;
+    for (const pm of doc.getElementsByTagName('Placemark')) {
+      const name = pm.querySelector('name')?.textContent || '';
+      const su = pm.querySelector('styleUrl')?.textContent?.replace('#', '');
+      const baseStyle = this._kmlStyles[su] || {};
+
+      const inline = {};
+      const ils = pm.querySelector('Style');
+      if (ils) {
+        const l = ils.querySelector('LineStyle');
+        const p = ils.querySelector('PolyStyle');
+        const i = ils.querySelector('IconStyle Icon href');
+        inline.stroke = l?.querySelector('color')?.textContent ? this._kmlColorToCss(l.querySelector('color').textContent) : null;
+        inline.strokeWidth = l?.querySelector('width')?.textContent ? Number(l.querySelector('width').textContent) : null;
+        inline.fill = p?.querySelector('color')?.textContent ? this._kmlColorToCss(p.querySelector('color').textContent) : null;
+        inline.iconUrl = i?.textContent || null;
+      }
+
+      const style = { stroke: '#3388ff', strokeWidth: 2, fill: 'rgba(51,136,255,0.15)', iconUrl: null, ...baseStyle, ...inline };
+
+      let type, coords;
+      const pt = pm.querySelector('Point coordinates');
+      const ln = pm.querySelector('LineString coordinates');
+      const pg = pm.querySelector('Polygon outerBoundaryIs LinearRing coordinates');
+	  
+      if (pt) { type = 'point'; coords = this._parseKmlCoordinates(pt.textContent); }
+      else if (ln) { type = 'linestring'; coords = this._parseKmlCoordinates(ln.textContent); }
+      else if (pg) { type = 'polygon'; coords = this._parseKmlCoordinates(pg.textContent); }
+      else continue;
+
+      this.kmlFeatures.push({ type, coords, style, name });
+    }
+    this.update();
+    return this.kmlFeatures.length - was;
+  }
+
+  clearKML() { 
+	this._kmlStyles = {}; 
+	this.kmlFeatures = []; 
+	this._updateKML(); 
+  }  
+  
+  /** Добавление хинта 
+	options: 
+		- lat - широта
+		- lon - долгота
+		- title - заголовок
+		- content - текст (html)
+		- [id] - уникальный ID для управления
+		- [offset = { x: 0, y: -5 }] - смещение
+		- [autoClose] - Автозакрытие других хинтов
+		- [onClose] - обработчик закрытия
+  */
+  addHint(options) {
+    const { lat, lon, title = null, content = null, id = `hint_${Date.now()}`, offset = { x: -2, y: -6 }, autoClose = true, onClose = null } = options;
+    if (autoClose) this.clearHints();
+    const hint = { id, lat, lon, content, title, offset, onClose, el: null };
+    this._renderHint(hint);
+    this.hints.push(hint);
+    return id;
+  }
+
+  // Удаление хинта //
+  removeHint(id) {
+    const i = this.hints.findIndex(h => h.id === id);
+    if (i >= 0) { if(this.hints[i].el) this.hints[i].el.remove(); this.hints.splice(i, 1); }
+  }
+
+  // Обновление хинта //
+  updateHint(id, options = {}) {
+    const h = this.hints.find(x => x.id === id);
+    if (!h) return;
+    if (options !== undefined) h.options = options;
+    if (options.title !== undefined) h.title = options.title;
+    if (options.content !== undefined) h.content = options.content;
+    if (options.onClose !== undefined) h.onClose = options.onClose;
+    if (options.offset !== undefined) h.offset = { ...h.offset, ...options.offset };
+    if (h.el) h.el.remove();
+    this._renderHint(h);
+  }
+
+  // Очистка хинтов //
+  clearHints() { 
+    this.hints.forEach(h => { if(h.el) h.el.remove(); });
+    this.hints = [];
+  }
+
+  // Установить центр карты //
+  setCenter(lat, lon, zoom = this.viewZ) {
+	this.lat = lat;
+    this.lon = lon;
+    this.viewX = this._lonToX(this.lon, zoom);
+    this.viewY = this._latToY(this.lat, zoom);
+    this.viewZ = zoom;
+    this.update();
+  }
+  
+  // Получить координаты центра карты //
+  getCenter() {
+	return {lat:this.realLat,lon:this.realLon,zoom:this.viewZ};
+  }
+  
+  // Получить координаты курсора мыши //
+  getMousePos() {
+	return {lat:this.mouseLat,lon:this.mouseLat,zoom:this.viewZ};
+  }
+
+  // Установить url тайлов карты //
+  setTileUrl(url) {
+    this.tileUrl = url;
+	this._activateTileProvider();
+    this.update();
+  }
+
+  // Выбрать предустановленную карту //
+  setTileProvider(key) {	  
+	var config = this.TILE_PROVIDERS[key];
+	if (config == undefined) key = 'OSM';	
+	config = this.TILE_PROVIDERS[this.providerKey = key];
+	
+	var lt = this.realLat;
+	var ln = this.realLon;
+	
+	var ellipse = this.isEllipse;		
+	this._setProvider(config);
+    this._activateTileProvider(key);
+    if (ellipse != this.isEllipse) {		
+		this.setCenter(lt,ln);
+	} else {
+		this.update();
+	};
+  } 
+
+  // Установить поддомены карты //
+  setSubdomains(list) {
+    this.subdomains = Array.isArray(list) ? list : [];
+    this.update();
+  }
+
+  // Изменить зум карты //
+  setZoomInOut(delta) {
+	const oldZ = this.viewZ;
+    this.viewZ = Math.max(this.minZoom, Math.min(this.maxZoom, oldZ + delta));
+    if (this.viewZ === oldZ) return;
+    const scale = Math.pow(2, this.viewZ - oldZ);
+    this.viewX = this.viewX * scale;
+    this.viewY = this.viewY * scale;
+    this.update();
+  }
+
+  // Деструктор //
+  destroy() {
+    this.container.removeEventListener('mousedown', this._onMouseDown);
+    window.removeEventListener('mousemove', this._onMouseMove);
+    window.removeEventListener('mouseup', this._onMouseUp);
+    this.container.removeEventListener('wheel', this._onWheel);
+    this.tileLayer?.remove();
+	this.overlayLayer?.remove();
+	this.kmlLayer?.remove(); 
+	this.hintLayer?.remove();
+    this.markerLayer?.remove();
+  }
+
+  /* // Обработчики событий // */
+  _onMouseDown(e) {
+    this.isDragging = true;
+    this.dragStart = { x: e.clientX, y: e.clientY };
+    this.dragView = { x: this.viewX, y: this.viewY };
+  }
+
+  _onMouseMove(e) {
+    if (!this.isDragging) 
+	{
+		const rect = this.container.getBoundingClientRect();
+		const offX = (e.clientX - rect.left - rect.width / 2) / this.tileSize;
+		const offY = (e.clientY - rect.top - rect.height / 2) / this.tileSize;
+		this.mouseLon = this._xToLon(this.viewX + offX, this.viewZ);
+		this.mouseLat = this._yToLat(this.viewY + offY, this.viewZ);
+		if(this.showInformation) {
+			const el = document.getElementById('information')
+			if(el) el.innerHTML = `C ${this.realLat.toFixed(8)}/${this.realLon.toFixed(8)} M ${this.mouseLat.toFixed(8)}/${this.mouseLon.toFixed(8)}`;
+		};
+		return;
+	};
+    this.viewX = this.dragView.x - (e.clientX - this.dragStart.x) / this.tileSize;
+    this.viewY = this.dragView.y - (e.clientY - this.dragStart.y) / this.tileSize;
+    this.update();
+  }
+
+  _onMouseUp() { this.isDragging = false; }
+
+  _onWheel(e) {
+    e.preventDefault();
+    const oldZ = this.viewZ;
+    const delta = e.deltaY < 0 ? 1 : -1;
+    this.viewZ = Math.max(this.minZoom, Math.min(this.maxZoom, oldZ + delta));
+    if (this.viewZ === oldZ) return;
+
+    const rect = this.container.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+
+    const offX = (mx - rect.width / 2) / this.tileSize;
+    const offY = (my - rect.height / 2) / this.tileSize;
+
+    const scale = Math.pow(2, this.viewZ - oldZ);
+    this.viewX = (this.viewX + offX) * scale - offX;
+    this.viewY = (this.viewY + offY) * scale - offY;
+
+    this.update();
+  }
+}
+
+</script>
+
+<script id="initialization"> /* ========================= Инициализация ========================= */
+
+	// Test: ?lat=55.89&lon=37.69&zoom=13&text=SVA6IDIxNy4xNS4xMzUuMTA3  //
+
+	// Определение и загрузка параметров из query //
+	const params = new URLSearchParams(window.location.search);
+	var lt = 57.616670, ln = 39.85, zoom = 12, text = 'Ярославль', provider = 'DblGIS';
+	
+	try { lt = parseFloat(params.get('lat') ?? 57.616670); } catch (e) {};
+	try { ln = parseFloat(params.get('lon') ?? 39.85); } catch (e) {};
+	try { zoom = parseInt(params.get('zoom') ?? 12); } catch (e) {};
+	try { text = atob(params.get('text') ?? ''); if (text.length == 0) text = 'Ярославль'; } catch (e) {}; // <- base64
+	try { provider = params.get('provider') ?? 'DblGIS'; } catch (e) {};
+
+	// Инициализация карты //
+	const map = new SimpleTileMap('#map-container', {
+		lat: lt,               // широта 
+		lon: ln,               // долгота
+		zoom: zoom,            // зум
+		provider: provider,	   // тип карты		
+		markerText: text,      // текст маркера
+		showMarker: true,      // отображение маркера
+		onMarkerClick: (d) =>  // событие клика маркера
+			console.log(`Marker clicked: ${d.lat}/${d.lon}/${d.zoom}/${d.provider}/${d.markerText}/${d.element}`),		
+		showProviders: true,   // отображать типы карт
+		showZoomLevels: true,  // отображать зум (+) зум (-)
+		showInformation: true, // отображать координаты
+	});
+
+	// Объекты карты //
+	var addCircle1 = function() {
+		map.addCircle({
+		  lat: 57.63, lon: 39.886, radius: 6000, // метры
+		  color: 'rgba(66, 139, 202, 0.2)',     // заливка
+		  stroke: 'rgba(66, 139, 202, 0.9)',    // обводка
+		  strokeWidth: 2,
+		  id: 'circle-1'
+		});
+	};
+
+	var addCircle2 = function() {
+		map.addCircle({
+		  lat: 57.62, lon: 39.887, radius: 5000, // метры
+		  color: 'rgba(255, 120, 202, 0.4)',    // заливка
+		  stroke: 'rgba(255, 120, 202, 0.9)',   // обводка
+		  strokeWidth: 1,
+		  id: 'circle-2'
+		});	
+	};
+
+	var addRect1 = function() {
+		map.addRectangle({
+		  north: 57.63+.052, south: 57.63-.036, east: 39.86+.07, west: 39.86-.07,
+		  color: 'rgba(233, 30, 99, 0.1)',
+		  stroke: 'rgba(233, 30, 99, 0.7)',
+		  strokeWidth: 2,
+		  id: 'rect-1'
+		});
+	};
+	
+	var addRect2 = function() {
+		map.addRectangleByCenter({
+		   lat: 57.625, lon: 39.8865,
+		   widthMeters: 7000,   // ширина по долготе
+		   heightMeters: 6000,  // высота по широте
+		   color: 'rgba(76, 175, 80, 0.1)',
+		   stroke: 'rgba(76, 175, 80, 0.4)',
+		   id: 'rect-2'
+		});
+		setTimeout(() => map.updateRectangle('rect-2', { widthMeters: 1600, heightMeters: 2700}), 4000);
+	};
+
+	var addKML1 = function() {
+		var demoKML = '<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://www.opengis.net/kml/2.2"><Document><Style id="redPoly"><LineStyle><color>ff0000ff</color><width>2</width></LineStyle><PolyStyle><color>660000ff</color></PolyStyle></Style>';
+			demoKML += '<Placemark><name>Маршрут</name><LineString><coordinates>39.88,57.64 39.90,57.645 39.91,57.65 39.89,57.655 </coordinates></LineString></Placemark>';
+			demoKML += '<Placemark><name>Зона интереса</name><styleUrl>#redPoly</styleUrl><Polygon><outerBoundaryIs><LinearRing><coordinates>39.87,57.64 39.90,57.64 39.90,57.66 39.87,57.66 39.87,57.64</coordinates></LinearRing></outerBoundaryIs></Polygon></Placemark>';
+			demoKML += '<Placemark><name>Точка A</name><Point><coordinates>39.89,57.65</coordinates></Point></Placemark></Document></kml>';
+		map.addKML(demoKML).then(c => console.log(`Загружено ${c} объектов из KML`));
+		map.setCenter(57.645,39.90);
+		var popupHtml5 = '<div style="display:flex; align-items:center; gap:6px; width:400px;">';
+			popupHtml5 += '<span style="font-size:18px;">&nbsp;</span>';
+			popupHtml5 +='<div><b>Выберите действие:</b><br/><ol>';
+			popupHtml5 +='<li><a href="#" onclick="map.clearKML();return false;">Удалить KML слои</a></li>';
+			popupHtml5 +='<li><a href="#" onclick="map.setCenter('+lt+','+ln+');return false;">Вернутся к «'+text+'»</a></li>';
+			popupHtml5 +='</ol></div></div>';
+		map.addHint({lat: 57.645, lon: 39.90, title: 'Demo KML', content: popupHtml5, id: 'hint-kml'});	
+	};
+	
+	var addKML2 = function() {
+		map.addKML('map.kml').then(c => console.log(`Загружено ${c} объектов из KML`));
+		map.setCenter(44.36,40.3);	
+		var popupHtml4 = '<div style="display:flex; align-items:center; gap:6px; width:400px;">';
+			popupHtml4 += '<span style="font-size:18px;">&nbsp;</span>';
+			popupHtml4 +='<div><b>Выберите действие:</b><br/><ol>';
+			popupHtml4 +='<li><a href="#" onclick="map.clearKML();return false;">Удалить KML слои</a></li>';
+			popupHtml4 +='<li><a href="#" onclick="map.setCenter('+lt+','+ln+');return false;">Вернутся к «'+text+'»</a></li>';
+			popupHtml4 +='</ol></div></div>';
+		map.addHint({lat: 44.36, lon: 40.3, title: 'KML из map.kml', content: popupHtml4, id: 'hint-kml'});	
+	};
+		
+
+	if (/* Динамические изменения маркера */ true) {
+		setTimeout(() => map.setMarker(lt, ln, `${text}`,(d) => {
+			var popupHtml3 = '<div style="display:flex; align-items:center; gap:6px; width:400px;">';
+			popupHtml3 += '<span style="font-size:18px;">&nbsp;</span>';
+			popupHtml3 +='<div><b>Выберите действие:</b><br/><ol>';
+			popupHtml3 +='<li><a href="#" onclick="map.setMarker(57.635,39.87);return false;">Переместить маркер</a></li>';
+			popupHtml3 +='<li><a href="#" onclick="map.setMarkerText(`'+d.markerText+' (Изменен)`);return false;">Изменить текст маркера</a></li>';
+			popupHtml3 +='<li><a href="#" onclick="map.setMarkerText(`'+text+'`);return false;">Восстановить текст маркера</a></li>';
+			popupHtml3 +='<li><a href="#" onclick="map.setMarkerText(null);return false;">Удалить маркер (1)</a></li>';
+			popupHtml3 +='<li><a href="#" onclick="map.removeMarker();return false;">Удалить маркер(2)</a></li>';
+			popupHtml3 +='<li><a href="#" onclick="addCircle1();return false;">Добавить</a>, <a href="#" onclick="map.updateCircle(\'circle-1\', { radius: 2500 });return false;">изменить</a> или ';
+			popupHtml3 +='<a href="#" onclick="map.removeOverlay(\'circle-1\');return false;">удалить</a> круг 1</li>';
+			popupHtml3 +='<li><a href="#" onclick="addCircle2();return false;">Добавить</a>, <a href="#" onclick="map.updateCircle(\'circle-2\', { lat: 57.62, lon: 39.887, radius: 2500 });return false;">изменить</a> или ';
+			popupHtml3 +='<a href="#" onclick="map.removeOverlay(\'circle-2\');return false;">удалить</a> круг 1</li>';
+			popupHtml3 +='<li><a href="#" onclick="addRect1();return false;">Добавить</a>, <a href="#" onclick="map.updateRectangle(\'rect-1\', { strokeWidth: 20 });return false;">изменить</a> или ';
+			popupHtml3 +='<a href="#" onclick="map.removeOverlay(\'rect-1\');return false;">удалить</a> зону 1</li>';
+			popupHtml3 +='<li><a href="#" onclick="addRect2();return false;">Добавить</a>, <a href="#" onclick="map.updateRectangle(\'rect-2\', { widthMeters: 4000, heightMeters: 4000, strokeWidth: 20 });return false;">изменить</a> или ';
+			popupHtml3 +='<a href="#" onclick="map.removeOverlay(\'rect-2\');return false;">удалить</a> зону 2</li>';
+			popupHtml3 +='<li><a href="#" onclick="map.setCenter('+d.lat+','+d.lon+');return false;">Центрировать карту</a></li>';
+			popupHtml3 +='<li><a href="#" onclick="addKML1();return false;">Отобразить слой «Demo KML»</a></li>';
+			popupHtml3 +='<li><a href="#" onclick="addKML2();return false;">Отобразить слой KML из «map.kml»</a></li>';
+			popupHtml3 +='<li><a href="#" onclick="map.clearKML();return false;">Удалить KML слои</a></li>';
+			popupHtml3 +='</ol></div></div>';
+			map.addHint({lat: d.lat, lon: d.lon, title: d.markerText, content: popupHtml3, id: 'hint-mt'})
+		}), 500);
+	};
+
+	if (/* Добавить точки (иконки) */ true) {
+		var popupHtml1 = '<div style="display:flex; align-items:center; gap:6px; width:300px;">';
+        popupHtml1 += '<span style="font-size:18px;">🚑</span>';
+		popupHtml1 += '<div><b>Карета скорой помощи</b>';
+		popupHtml1 +='</div>';	
+		map.addIcon({
+		  lat: 57.62, lon: 39.8,
+		  iconUrl: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHBhdGggZD0iTTEwIDQwbDQtMTJoMzZsNCAxMmg0djEySDZWNDBoNHoiIGZpbGw9IiMzYjgyZjYiIHN0cm9rZT0iIzFlM2E4YSIgc3Ryb2tlLXdpZHRoPSIxLjUiLz48cGF0aCBkPSJNMTggMjhsNC0xMGgyMGw0IDEweiIgZmlsbD0iIzkzYzVmZCIgc3Ryb2tlPSIjMWUzYThhIiBzdHJva2Utd2lkdGg9IjEiLz48Y2lyY2xlIGN4PSIxNiIgY3k9IjU0IiByPSI1IiBmaWxsPSIjMWYyOTM3Ii8+PGNpcmNsZSBjeD0iNDgiIGN5PSI1NCIgcj0iNSIgZmlsbD0iIzFmMjkzNyIvPjxjaXJjbGUgY3g9IjE2IiBjeT0iNTQiIHI9IjIiIGZpbGw9IiM5Y2EzYWYiLz48Y2lyY2xlIGN4PSI0OCIgY3k9IjU0IiByPSIyIiBmaWxsPSIjOWNhM2FmIi8+PHJlY3QgeD0iOSIgeT0iNDIiIHdpZHRoPSI1IiBoZWlnaHQ9IjMiIHJ4PSIxLjUiIGZpbGw9IiNmYmJmMjQiLz48cmVjdCB4PSI1MCIgeT0iNDIiIHdpZHRoPSI1IiBoZWlnaHQ9IjMiIHJ4PSIxLjUiIGZpbGw9IiNlZjQ0NDQiLz48L3N2Zz4=',
+		  size: { width: 32, height: 32 },
+		  id: 'icon-1',
+		  onClick: (data) => {
+			map.addHint({lat: data.lat, lon: data.lon, content: '<div style="width:300px;">Подождите, идет загрузка ...</div>', id: 'hint-1'});
+			setTimeout(() => map.updateHint('hint-1',{lat: data.lat, lon: data.lon, title: 'Мед. объект 24/7', content: popupHtml1, onClose: ()=>{} }), 1000);
+		  }
+		});
+		map.updateIcon('icon-1',{lat: 57.62, lon: 39.887, iconUrl: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3QgeD0iNiIgeT0iMTgiIHdpZHRoPSI0NCIgaGVpZ2h0PSIyNiIgcng9IjQiIGZpbGw9IiNmZWZlZmUiIHN0cm9rZT0iIzI1MzM0MSIgc3Ryb2tlLXdpZHRoPSIxLjUiLz48cmVjdCB4PSIzOCIgeT0iMjIiIHdpZHRoPSIxMiIgaGVpZ2h0PSIxMiIgcng9IjIiIGZpbGw9IiM2NGI1ZjYiIHN0cm9rZT0iIzI1MzM0MSIgc3Ryb2tlLXdpZHRoPSIxIi8+PHJlY3QgeD0iMTgiIHk9IjI0IiB3aWR0aD0iMTIiIGhlaWdodD0iNCIgZmlsbD0iI2U1MzkzNSIvPjxyZWN0IHg9IjIyIiB5PSIyMCIgd2lkdGg9IjQiIGhlaWdodD0iMTIiIGZpbGw9IiNlNTM5MzUiLz48cmVjdCB4PSIxMiIgeT0iMTQiIHdpZHRoPSI4IiBoZWlnaHQ9IjQiIHJ4PSIxIiBmaWxsPSIjMjE5NmYzIi8+PHJlY3QgeD0iMjQiIHk9IjE0IiB3aWR0aD0iOCIgaGVpZ2h0PSI0IiByeD0iMSIgZmlsbD0iI2Y0NDMzNiIvPjxyZWN0IHg9IjQiIHk9IjQwIiB3aWR0aD0iNiIgaGVpZ2h0PSI0IiByeD0iMSIgZmlsbD0iI2ZmY2EyOCIvPjxyZWN0IHg9IjQ2IiB5PSI0MCIgd2lkdGg9IjYiIGhlaWdodD0iNCIgcng9IjEiIGZpbGw9IiNlZjUzNTAiLz48Y2lyY2xlIGN4PSIxOCIgY3k9IjQ2IiByPSI2IiBmaWxsPSIjMjUzMzQxIi8+PGNpcmNsZSBjeD0iNDIiIGN5PSI0NiIgcj0iNiIgZmlsbD0iIzI1MzM0MSIvPjxjaXJjbGUgY3g9IjE4IiBjeT0iNDYiIHI9IjIuNSIgZmlsbD0iI2NmZDZkZCIvPjxjaXJjbGUgY3g9IjQyIiBjeT0iNDYiIHI9IjIuNSIgZmlsbD0iI2NmZDZkZCIvPjxyZWN0IHg9IjEwIiB5PSI0MiIgd2lkdGg9IjQwIiBoZWlnaHQ9IjIiIGZpbGw9IiMyNTMzNDEiLz48L3N2Zz4='});
+				
+		
+		var popupHtml2 = '<div style="display:flex; align-items:center; gap:6px;; width:300px;">';
+		popupHtml2 += '<span style="font-size:18px;">⛽</span>';
+		popupHtml2 += '<div><b>АЗС Газпромнефть</b><br/><span style="color:#666; font-size:11px;">95 / 98 / ДТ<br/>+7 000 000 0000</span>';
+		popupHtml2 +='</div>';
+		map.addIcon({
+		  lat: 57.63, lon: 39.886,
+		  iconUrl: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3QgeD0iMTIiIHk9IjEyIiB3aWR0aD0iMjgiIGhlaWdodD0iMzgiIHJ4PSI0IiBmaWxsPSIjNDc1NTY5IiBzdHJva2U9IiMxZTI5M2IiIHN0cm9rZS13aWR0aD0iMS41Ii8+PHJlY3QgeD0iMTYiIHk9IjE2IiB3aWR0aD0iMjAiIGhlaWdodD0iMTIiIHJ4PSIyIiBmaWxsPSIjY2JkNWUxIi8+PHJlY3QgeD0iMTkiIHk9IjE5IiB3aWR0aD0iNSIgaGVpZ2h0PSI2IiByeD0iMSIgZmlsbD0iIzFlMjkzYiIvPjxyZWN0IHg9IjI2IiB5PSIxOSIgd2lkdGg9IjciIGhlaWdodD0iNiIgcng9IjEiIGZpbGw9IiMxZTI5M2IiLz48cGF0aCBkPSJNNDAgMjIgQzUyIDIyIDUwIDM0IDUwIDM0IiBmaWxsPSJub25lIiBzdHJva2U9IiMxZTI5M2IiIHN0cm9rZS13aWR0aD0iMi41IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cmVjdCB4PSI0OCIgeT0iMzIiIHdpZHRoPSI2IiBoZWlnaHQ9IjEyIiByeD0iMiIgZmlsbD0iI2RjMjYyNiIvPjxyZWN0IHg9IjQ5IiB5PSIzMCIgd2lkdGg9IjQiIGhlaWdodD0iNCIgcng9IjEiIGZpbGw9IiM2NDc0OGIiLz48cmVjdCB4PSIxNCIgeT0iNDgiIHdpZHRoPSIyNCIgaGVpZ2h0PSI0IiByeD0iMSIgZmlsbD0iIzFlMjkzYiIvPjwvc3ZnPg==',
+		  size: { width: 32, height: 32 },
+		  id: 'icon-2',
+		  onClick: (data) => map.addHint({lat: data.lat, lon: data.lon, title: 'АЗС 24/7', content: popupHtml2, id: 'hint-2'})
+		});
+	}
+	
+</script>
+
+</html>
