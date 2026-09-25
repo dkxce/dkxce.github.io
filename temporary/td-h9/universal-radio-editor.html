@@ -51,7 +51,8 @@
   .dlgcols{overflow:auto;display:grid;grid-template-columns:150px 1fr;gap:6px 12px;margin-bottom:12px;padding-right:4px}
   .dlgcols label{color:var(--txt);align-self:center}
   .dlgcols select{background:var(--input);border:1px solid var(--line);color:var(--txt);border-radius:4px;padding:4px 6px;font-size:12px}
-  .dlgbtns{display:flex;gap:8px;justify-content:flex-end}
+  .dlgbtns{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+  .dlg .dlgbtns .btn{flex:1 1 auto;min-width:118px;font-size:12px;padding:7px 8px;white-space:normal}
   .foot a{color:var(--acc);text-decoration:none}
   .foot a:hover{text-decoration:underline}
   input[type=text],input[type=number],select{background:var(--input);border:1px solid var(--line);
@@ -124,7 +125,7 @@
 <div id="dlgExp" class="dlgwrap" style="display:none">
   <div class="dlg">
     <h3>Формат экспорта</h3>
-    <p class="msg">CHIRP — совместимый (Duplex/Offset/Tone/DCS). CSP — формат TIDRadio (как в Tidradio_H9(CSP)).
+    <p class="msg">CHIRP/Odmaster — совместимые (Duplex/Offset/Tone/DCS). CSP — формат TIDRadio (как в Tidradio_H9(CSP)).
       «Как есть» — полный родной формат редактора.</p>
     <div id="dlgExpCols"></div>
     <div class="dlgbtns" id="dlgExpBtns"></div>
