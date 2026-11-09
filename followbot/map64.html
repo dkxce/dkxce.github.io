@@ -593,7 +593,8 @@
 						{
 							let uinfo = robj.Followers[i];
 							let query = gpsurl + robj.Followers[i].ID;
-							query = 'https://driver-updater.com/api/v1/front/proxyquery/?rnd='+Math.random()+'&My-Proxy-Query=' + btoa(query);
+							//query = 'https://driver-updater.com/api/v1/front/proxyquery/?rnd='+Math.random()+'&My-Proxy-Query=' + btoa(query);
+							query = 'https://long-thunder-1bd6.milokz.workers.dev/?url=' + btoa(query); // # -> dash.cloudflare.com
 							$.get(query, function(fd){
 																
 								//alert(fd);

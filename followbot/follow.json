@@ -4,16 +4,19 @@
 	"TimeZone": 3,
 	"Followers":
 	[
-		{ "ID": "39616814835269360468340", "Name": "RTT_APTEM", "Url": "67716814835872153167687", "Show": true,  "Map64": true, "Symbol": "\\v", "Account": "u..b"},
-		{ "ID": "63515901450646248517251", "Name": "APTEM",     "Url": "31115925493663165317887", "Show": true,  "Map64": true, "Symbol": "\\k", "Account": "d..e"},
-		{ "ID": "74915975838321868801228", "Name": "47RUZA",    "Url": "67415975838504902429266", "Show": true,  "Map64": true, "Symbol": "/<",  "Account": "m..z"},		
-		{ "ID": "21117134354651073199441", "Name": "RTT_A_M50", "Url": "21117134354651073199441", "Show": true,  "Map64": true, "Symbol": "/>",  "Account": "u..b"},
+		{ "ID": "14717942249147111760699", "Name": "APT-1",      "Url": "14717942249147111760699", "Show": true,   "Map64": true, "Symbol": "/b",  "Account": "u..b, RTT-TDH9-explitic"},
+		{ "ID": "52617942287534883100274", "Name": "APT-2",      "Url": "52617942287534883100274", "Show": true,   "Map64": true, "Symbol": "\\b", "Account": "u..b, RTT-TDH9-667383866150"},		
+		{ "ID": "39616814835269360468340", "Name": "RTT_APTEM",  "Url": "67716814835872153167687", "Show": true,   "Map64": true, "Symbol": "\\v", "Account": "u..b"},
+		
+		{ "ID": "63515901450646248517251", "Name": "APTEM",      "Url": "31115925493663165317887", "Show": false,  "Map64": true, "Symbol": "\\k", "Account": "d..e"},
+		{ "ID": "74915975838321868801228", "Name": "47RUZA",     "Url": "67415975838504902429266", "Show": false,  "Map64": true, "Symbol": "/<",  "Account": "m..z"},		
+		{ "ID": "21117134354651073199441", "Name": "RTT_A_M50",  "Url": "21117134354651073199441", "Show": false,  "Map64": true, "Symbol": "/>",  "Account": "u..b"},
 				
-		{ "ID": "92415901456521569128103", "Name": "ANN",       "Url": "91517110020701986461385", "Show": false, "Map64": true, "Symbol": "/[",  "Account": "d..e"},
-		{ "ID": "66515901456969664336914", "Name": "RINAT",     "Url": "52817110020988508999261", "Show": false, "Map64": true, "Symbol": "/=",  "Account": "d..e"},
-		{ "ID": "49215901457632199196376", "Name": "MARVAS",    "Url": "43517110021151639155555", "Show": false, "Map64": true, "Symbol": "\\j", "Account": "d..e"},
-		{ "ID": "82215901460049970416697", "Name": "ROBERT",    "Url": "79617194737941234222137", "Show": false, "Map64": true, "Symbol": "/b",  "Account": "m..z"},
+		{ "ID": "92415901456521569128103", "Name": "ANN",        "Url": "91517110020701986461385", "Show": false, "Map64": true, "Symbol": "/[",   "Account": "d..e"},
+		{ "ID": "66515901456969664336914", "Name": "RINAT",      "Url": "52817110020988508999261", "Show": false, "Map64": true, "Symbol": "/=",   "Account": "d..e"},
+		{ "ID": "49215901457632199196376", "Name": "MARVAS",     "Url": "43517110021151639155555", "Show": false, "Map64": true, "Symbol": "\\j",  "Account": "d..e"},
+		{ "ID": "82215901460049970416697", "Name": "ROBERT",     "Url": "79617194737941234222137", "Show": false, "Map64": true, "Symbol": "/b",   "Account": "m..z"},
 
-		{ "ID": "86456123453142658763587", "Name": "DEMO",      "Url": "86456123453142658763587", "Show": false, "Map64": true, "Symbol": "\\1", "Account": "d..e"}
+		{ "ID": "86456123453142658763587", "Name": "DEMO",       "Url": "86456123453142658763587", "Show": false, "Map64": true, "Symbol": "\\1",  "Account": "d..e"}
 	]
 }
