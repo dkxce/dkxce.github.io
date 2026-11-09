@@ -35,6 +35,9 @@
 	
 		var hashusr = "";
 		if(window.location.hash) hashusr = window.location.hash.substr(1).toUpperCase();
+		
+		const params = new URLSearchParams(window.location.search);
+		const only = params.get('only'); 
 	
 		var map = L.map('map', {center: [55.7, 37.7], zoom: (hashusr == "" ? 10 : 13), zoomControl: false, zoomsliderControl: true});
 		map.doubleClickZoom.disable();
@@ -275,6 +278,8 @@
 			txt += 'where is on <a href="'+iu1.replaceAll("{lon}", lon).replaceAll("{lat}", lat).replaceAll("{num}", '1').replaceAll("{zoom}", "13")+'" target="_blank">yandex</a></br>';
 			txt += 'where is on <a href="'+iu2.replaceAll("{lon}", lon).replaceAll("{lat}", lat).replaceAll("{num}", '1').replaceAll("{zoom}", "13")+'" target="_blank">2GIS</a></br>';
 			txt += '<hr/><span style="font-size:14px;">follow <a href="map.html?rnd='+Math.random()+'#'+user+'">24</a> | <a href="map64.html?rnd='+Math.random()+'#'+user+'">64</a> | <a href="maplone.html?rnd='+Math.random()+'#'+user+'">128</a> | <a href="?rnd='+Math.random()+'#*'+user+'">др</a></span></br>';
+			let subid = id.substring(0,4);
+			txt += '<hr/><span style="font-size:14px;">only <a href="map.html?rnd='+Math.random()+'&only='+subid+'">24</a> | <a href="map64.html?rnd='+Math.random()+'&only='+subid+'">64</a> | <a href="maplone.html?rnd='+Math.random()+'&only='+subid+'">128</a></span></br>';
 			txt += '</td></tr>';
 			txt += '</div>';	
 
@@ -526,6 +531,7 @@
 				{
 					for (var i=0;i<robj.Followers.length;i++)
 					{
+						if (only != null && !robj.Followers[i].ID.startsWith(only)) continue;
 						if(robj.Followers[i].Show)
 						{
 							let uinfo = robj.Followers[i];
