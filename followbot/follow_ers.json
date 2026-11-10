@@ -1,0 +1,10 @@
+[
+    {
+        "name": "По умолчанию",
+        "config": "follow.json"
+    },
+    {
+        "name": "Только TDH9",
+        "config": "follow_tdh9.json"
+    }
+]
