@@ -5,7 +5,7 @@
 	"Followers":
 	[
 		{ "ID": "14717942249147111760699", "Name": "APT-1",      "Url": "14717942249147111760699", "Show": true,   "Map64": true, "Symbol": "/b",  "Account": "u..b, RTT-TDH9-explitic"},
-		{ "ID": "52617942287534883100274", "Name": "APT-2",      "Url": "52617942287534883100274", "Show": true,   "Map64": true, "Symbol": "\\b", "Account": "u..b, RTT-TDH9-667383866150"},		
+		{ "ID": "52617942287534883100274", "Name": "APT-2",      "Url": "52617942287534883100274", "Show": true,   "Map64": true, "Symbol": "/e",  "Account": "u..b, RTT-TDH9-667383866150"},		
 		{ "ID": "39616814835269360468340", "Name": "RTT_APTEM",  "Url": "67716814835872153167687", "Show": true,   "Map64": true, "Symbol": "\\v", "Account": "u..b"},
 		
 		{ "ID": "63515901450646248517251", "Name": "APTEM",      "Url": "31115925493663165317887", "Show": false,  "Map64": true, "Symbol": "\\k", "Account": "d..e"},
