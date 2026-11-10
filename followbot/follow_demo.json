@@ -1,0 +1,22 @@
+{
+    "Admin": 5288789315,
+    "Mapi": [
+        true,
+        true,
+        true,
+        true,
+        true
+    ],
+    "TimeZone": 3,
+    "Followers": [
+        {
+            "ID": "86456123453142658763587",
+            "Name": "DEMO",
+            "Url": "86456123453142658763587",
+            "Show": true,
+            "Map64": true,
+            "Symbol": "\\)",
+            "Account": "DEMO"
+        }
+    ]
+}

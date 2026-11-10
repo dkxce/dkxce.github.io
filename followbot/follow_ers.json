@@ -6,5 +6,9 @@
     {
         "name": "Только TDH9",
         "config": "follow_tdh9.json"
+    },
+    {
+        "name": "DEMO (Live)",
+        "config": "follow_demo.json"
     }
 ]
